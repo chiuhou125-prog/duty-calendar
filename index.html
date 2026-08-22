@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>偵二隊行動行事曆</title>
+    <style>
+        body { background-color: #121212; color: #E0E0E0; font-family: '微軟正黑體', sans-serif; margin: 0; padding: 10px; padding-bottom: 50px; }
+        .nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .nav-title { font-size: 20px; font-weight: bold; }
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+        button { background-color: #252526; color: #E0E0E0; border: none; padding: 8px 12px; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: bold; }
+        button.primary { background-color: #007ACC; color: white; width: 100%; padding: 15px; font-size: 16px; margin-top: 10px; }
+        .legend { font-size: 12px; color: #A0A0A0; margin-bottom: 10px; line-height: 1.4; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background-color: #333333; border: 2px solid #333333; border-radius: 8px; overflow: hidden; }
+        .day-header { background-color: #1E1E1E; text-align: center; padding: 8px 0; font-size: 13px; font-weight: bold; }
+        .cal-cell { background-color: #252526; min-height: 70px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px; text-align: center; cursor: pointer; }
+        .cal-cell.empty { background-color: #121212; cursor: default; }
+        .cell-duty { background-color: #1A3B32; color: #4ADE80; }
+        .cell-off { background-color: #451A1F; color: #FCA5A5; }
+        .date-num { font-size: 15px; font-weight: bold; margin-bottom: 2px; }
+        .info-txt { font-size: 11px; margin: 1px 0; }
+        .reserve-txt { color: #93C5FD; font-size: 11px; }
+        .task-case { color: #FFD700; font-size: 11px; font-weight: bold; margin-top: 2px; }
+        .task-note { color: #FCA5A5; font-size: 11px; font-weight: bold; margin-top: 2px; }
+        .edit-panel { background-color: #1E1E1E; padding: 15px; border-radius: 8px; margin-top: 20px; }
+        .selected-date-title { font-size: 18px; color: #007ACC; font-weight: bold; margin-bottom: 15px; }
+        .input-group label { display: block; font-weight: bold; margin: 10px 0 5px; font-size: 14px; }
+        .input-group textarea { width: 100%; box-sizing: border-box; background-color: #121212; color: #E4E4E7; border: 1px solid #333; border-radius: 6px; padding: 10px; font-family: inherit; font-size: 14px; resize: vertical; }
+        
+        /* 登入畫面專用 CSS */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #121212; z-index: 9999; display: flex;
+            flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;
+        }
+        #login-screen input { 
+            width: 100%; max-width: 300px; padding: 15px; font-size: 16px; 
+            text-align: center; border-radius: 8px; border: none; margin-bottom: 15px;
+            background-color: #1E1E1E; color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 登入防護罩 -->
+    <div id="login-screen">
+        <h2 style="color:#007ACC; margin-bottom: 5px;">🛡️ 偵二隊行動行事曆</h2>
+        <p style="color:#A0A0A0; margin-bottom: 30px; font-size: 14px;">請輸入帳號與密碼</p>
+        
+        <!-- 改為帳號輸入框 -->
+        <input type="text" id="acc-input" placeholder="帳號" autocapitalize="off">
+        <input type="password" id="pwd-input" placeholder="密碼">
+        
+        <button class="primary" style="max-width: 300px;" onclick="verifyLogin()">解鎖進入</button>
+    </div>
+
+    <!-- 系統主體 (登入後才會顯示) -->
+    <div id="app-content" style="display: none;">
+        <div class="nav-bar">
+            <div class="nav-title" id="month-label"></div>
+            <div class="nav-controls">
+                <button onclick="changeMonth(-1)">◀</button>
+                <button onclick="changeMonth(1)">▶</button>
+            </div>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <button onclick="loadTasks()">🔄 同步</button>
+            <label style="font-size: 14px;"><input type="checkbox" id="hide-chk" onchange="renderCalendar()"> 隱藏其他隊伍</label>
+        </div>
+
+        <div class="legend">💡 [⭐案件] 重要勤務 │ [📌記事] 備註 │ (預備) 偵六隊值班</div>
+        <div class="calendar-grid" id="calendar"></div>
+
+        <div class="edit-panel" id="edit-panel" style="display: none;">
+            <div class="selected-date-title" id="sel-date-lbl">請選擇日期</div>
+            <div class="input-group"><label style="color:#FFD700;">⭐ 執行案件 (重要)：</label><textarea id="case-text" rows="3"></textarea></div>
+            <div class="input-group"><label style="color:#FCA5A5;">📌 一般記事：</label><textarea id="note-text" rows="3"></textarea></div>
+            <button class="primary" onclick="saveTask()">💾 儲存任務紀錄 (自動上傳)</button>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 🔒 安全連線設定區
+        // ==========================================
+        const FIREBASE_URL = "https://calandar-2e41c-default-rtdb.asia-southeast1.firebasedatabase.app/tasks";
+        
+        // 請填入您 Firebase 的 Web API Key
+        const API_KEY = "AIzaSyAJdTuKBRpj2So4QPyCllHc0ucva4qx5g8"; 
+        
+        let ID_TOKEN = ""; 
+        // ==========================================
+
+        let currentDate = new Date();
+        let selectedDateStr = "";
+        let tasks = {};
+
+        // 登入驗證邏輯
+        async function verifyLogin() {
+            let acc = document.getElementById('acc-input').value.trim();
+            let pwd = document.getElementById('pwd-input').value;
+            
+            if(!acc || !pwd) return alert("請輸入帳號與密碼！");
+            
+            // 💡 智慧判斷機制：
+            // 如果輸入的內容已經包含 '@'，就直接使用；如果不包含，才自動補上單位的網域
+            let formattedEmail = acc.includes('@') ? acc : acc + "@ntpd.gov.tw";
+            
+            let authUrl = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${API_KEY}`;
+            let btn = document.querySelector("#login-screen button");
+            btn.innerText = "驗證中...";
+            
+            try {
+                let res = await fetch(authUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: formattedEmail, password: pwd, returnSecureToken: true })
+                });
+                let data = await res.json();
+                
+                if (data.idToken) {
+                    ID_TOKEN = data.idToken; 
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('app-content').style.display = 'block';
+                    loadTasks(); 
+                } else {
+                    btn.innerText = "解鎖進入";
+                    document.getElementById('pwd-input').value = "";
+                    alert("帳號或密碼錯誤，請重新輸入。");
+                }
+            } catch (e) {
+                btn.innerText = "解鎖進入";
+                alert("連線失敗，請檢查網路狀態。");
+            }
+        }
+
+        const DYNAMIC_HOLIDAYS = {
+            "2026-02-16": "除夕", "2026-02-17": "春節", "2026-02-18": "春節", "2026-02-19": "春節", "2026-02-20": "春節", "2026-03-02": "和平紀念日補假", 
+            "2026-04-03": "兒童節", "2026-04-04": "清明節", "2026-04-06": "清明節補假", "2026-06-19": "端午節", "2026-09-25": "中秋節", "2026-10-09": "國慶日補假"
+        };
+        const FIXED_HOLIDAYS = { "1-1": "元旦", "2-28": "和平紀念日", "4-4": "兒童節", "5-1": "勞動節", "6-15": "警察節", "10-10": "國慶日" };
+
+        function getHolidayName(dt) {
+            let md = (dt.getMonth() + 1) + "-" + dt.getDate();
+            if (FIXED_HOLIDAYS[md]) return FIXED_HOLIDAYS[md];
+            let ymd = dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, '0') + "-" + String(dt.getDate()).padStart(2, '0');
+            if (DYNAMIC_HOLIDAYS[ymd]) return DYNAMIC_HOLIDAYS[ymd];
+            return "";
+        }
+
+        function getDailyDuty(targetDate) {
+            let baseDate = new Date(2026, 7, 1); 
+            let checkDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+            if (checkDate < baseDate) return { squad: "未知", bCycle: "" };
+
+            let squadsAug = ['偵二隊', '偵三隊', '偵四隊', '偵五隊', '偵六隊', '偵七隊', '偵八隊', '偵一隊'];
+            let squadsSept = ['偵二隊', '偵三隊', '偵四隊', '偵五隊', '偵六隊', '偵七隊', '偵八隊', '科偵隊', '偵一隊'];
+
+            let curr = new Date(baseDate);
+            let squad = '偵三隊';
+            let zCount = 0;
+
+            while (curr < checkDate) {
+                if (squad === '偵二隊') zCount++;
+                curr.setDate(curr.getDate() + 1);
+                let seq = (curr.getFullYear() > 2026 || (curr.getFullYear() === 2026 && curr.getMonth() >= 8)) ? squadsSept : squadsAug;
+                let idx = seq.indexOf(squad);
+                squad = idx !== -1 ? seq[(idx + 1) % seq.length] : seq[0];
+            }
+
+            if (squad === '偵二隊') {
+                zCount++;
+                return { squad: squad, bCycle: (zCount % 2 === 0) ? "B1日/B2夜" : "B2日/B1夜" };
+            }
+            return { squad: squad, bCycle: "" };
+        }
+
+        function isUserOff(targetDate) {
+            let duty = getDailyDuty(targetDate);
+            let wd = targetDate.getDay(); 
+            
+            if (duty.squad === '偵二隊') return { off: false, reason: "" };
+            if (wd === 0 || wd === 6) return { off: true, reason: "休假" };
+            
+            let checkOffset = (offset) => {
+                let d = new Date(targetDate);
+                d.setDate(d.getDate() + offset);
+                return getDailyDuty(d).squad === '偵二隊';
+            }
+            if (wd === 5 && checkOffset(2)) return { off: true, reason: "補休" };
+            if (wd === 1 && checkOffset(-2)) return { off: true, reason: "補休" };
+            
+            let hol = getHolidayName(targetDate);
+            if (hol) return { off: true, reason: hol };
+            return { off: false, reason: "" };
+        }
+
+        async function loadTasks() {
+            try {
+                let res = await fetch(`${FIREBASE_URL}.json?auth=${ID_TOKEN}`);
+                let data = await res.json();
+                tasks = data || {};
+                renderCalendar();
+                if(selectedDateStr) selectDate(selectedDateStr, ...lastSelectedInfo);
+            } catch (e) {
+                alert("讀取資料失敗，請重新登入。");
+            }
+        }
+
+        async function saveTask() {
+            if (!selectedDateStr) return alert("請先選擇日期");
+            let cTxt = document.getElementById('case-text').value.trim();
+            let nTxt = document.getElementById('note-text').value.trim();
+            let tUrl = `${FIREBASE_URL}/${selectedDateStr}.json?auth=${ID_TOKEN}`;
+            
+            try {
+                if (cTxt || nTxt) {
+                    let payload = { case: cTxt, note: nTxt };
+                    tasks[selectedDateStr] = payload;
+                    await fetch(tUrl, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+                } else {
+                    delete tasks[selectedDateStr];
+                    await fetch(tUrl, { method: 'DELETE' });
+                }
+                renderCalendar();
+                alert("☁️ 已同步至雲端！");
+            } catch (e) {
+                alert("儲存失敗：" + e);
+            }
+        }
+
+        function changeMonth(offset) {
+            currentDate.setMonth(currentDate.getMonth() + offset);
+            renderCalendar();
+        }
+
+        let lastSelectedInfo = [];
+
+        function selectDate(dateStr, squad, bCycle, isOff, reason) {
+            selectedDateStr = dateStr;
+            lastSelectedInfo = [squad, bCycle, isOff, reason];
+            
+            document.getElementById('edit-panel').style.display = "block";
+            let offTxt = isOff ? ` (${reason})` : "";
+            let dTxt = "";
+            if (squad === '偵二隊') dTxt = ` (值班 - ${bCycle})`;
+            else if (squad === '偵六隊') dTxt = " (本隊預備)";
+            
+            document.getElementById('sel-date-lbl').innerText = `📅 ${dateStr} | ${squad}${offTxt}${dTxt}`;
+            
+            let t = tasks[dateStr];
+            if (t && typeof t === 'object') {
+                document.getElementById('case-text').value = t.case || "";
+                document.getElementById('note-text').value = t.note || "";
+            } else if (typeof t === 'string') {
+                document.getElementById('case-text').value = t;
+                document.getElementById('note-text').value = "";
+            } else {
+                document.getElementById('case-text').value = "";
+                document.getElementById('note-text').value = "";
+            }
+            
+            document.getElementById('edit-panel').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function renderCalendar() {
+            let y = currentDate.getFullYear();
+            let m = currentDate.getMonth();
+            document.getElementById('month-label').innerText = `${y} 年 ${m + 1} 月`;
+            
+            let calDiv = document.getElementById('calendar');
+            calDiv.innerHTML = "";
+            
+            let days = ["一", "二", "三", "四", "五", "六", "日"];
+            days.forEach(d => { calDiv.innerHTML += `<div class="day-header">${d}</div>`; });
+            
+            let firstDay = new Date(y, m, 1);
+            let lastDay = new Date(y, m + 1, 0);
+            let startWd = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; 
+            
+            for (let i = 0; i < startWd; i++) calDiv.innerHTML += `<div class="cal-cell empty"></div>`;
+            
+            let hideOthers = document.getElementById('hide-chk').checked;
+
+            for (let d = 1; d <= lastDay.getDate(); d++) {
+                let dt = new Date(y, m, d);
+                let dStr = y + "-" + String(m+1).padStart(2,'0') + "-" + String(d).padStart(2,'0');
+                
+                let duty = getDailyDuty(dt);
+                let offInfo = isUserOff(dt);
+                let hName = getHolidayName(dt);
+                
+                let squad = duty.squad;
+                let isOff = offInfo.off;
+                
+                let cls = "cal-cell";
+                if (squad === '偵二隊') cls += " cell-duty";
+                else if (isOff) cls += " cell-off";
+                
+                let showSquad = squad;
+                if (hideOthers && squad !== '偵二隊' && squad !== '偵六隊') showSquad = "";
+
+                let html = `<div class="date-num">${d}</div>`;
+                
+                if (squad === '偵二隊') {
+                    if (showSquad) html += `<div class="info-txt">${showSquad}</div>`;
+                    html += `<div class="info-txt">${duty.bCycle}</div>`;
+                    if (hName) html += `<div class="info-txt">[${hName}]</div>`;
+                } else if (squad === '偵六隊') {
+                    html += `<div class="reserve-txt">${showSquad ? '偵六隊(預備)' : '(預備)'}</div>`;
+                    if (isOff) html += `<div class="info-txt">(${offInfo.reason})</div>`;
+                } else {
+                    if (showSquad) html += `<div class="info-txt">${showSquad}</div>`;
+                    if (isOff) html += `<div class="info-txt">(${offInfo.reason})</div>`;
+                }
+                
+                let task = tasks[dStr];
+                if (task) {
+                    if (typeof task === 'string' && task.trim() || (task.case && task.case.trim())) html += `<div class="task-case">⭐案件</div>`;
+                    if (task.note && task.note.trim()) html += `<div class="task-note">📌記事</div>`;
+                }
+                
+                let cellDiv = document.createElement('div');
+                cellDiv.className = cls;
+                cellDiv.innerHTML = html;
+                cellDiv.onclick = () => selectDate(dStr, squad, duty.bCycle, isOff, offInfo.reason);
+                calDiv.appendChild(cellDiv);
+            }
+        }
+    </script>
+</body>
+</html>
