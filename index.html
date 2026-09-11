@@ -38,6 +38,18 @@
             text-align: center; border-radius: 8px; border: none; margin-bottom: 15px;
             background-color: #1E1E1E; color: white;
         }
+
+        /* 🌟 方案 D：今日專屬呼吸燈動畫 */
+        @keyframes pulseGlow {
+            0% { box-shadow: inset 0 0 0 2px #007ACC, inset 0 0 5px rgba(0, 122, 204, 0.3); }
+            50% { box-shadow: inset 0 0 0 2px #60A5FA, inset 0 0 15px rgba(96, 165, 250, 0.8); }
+            100% { box-shadow: inset 0 0 0 2px #007ACC, inset 0 0 5px rgba(0, 122, 204, 0.3); }
+        }
+        .today-glow {
+            animation: pulseGlow 2s infinite ease-in-out;
+            position: relative;
+            z-index: 2;
+        }
     </style>
 </head>
 <body>
@@ -61,7 +73,6 @@
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <button onclick="loadTasks()">🔄 同步</button>
-            <!-- 【修改點 1】更改標籤文字為「顯示其他隊伍」，並修改 ID -->
             <label style="font-size: 14px;"><input type="checkbox" id="show-chk" onchange="renderCalendar()"> 顯示其他隊伍</label>
         </div>
 
@@ -190,7 +201,17 @@
                 let data = await res.json();
                 tasks = data || {};
                 renderCalendar();
-                if(selectedDateStr) selectDate(selectedDateStr, ...lastSelectedInfo);
+                
+                if(selectedDateStr) {
+                    selectDate(selectedDateStr, ...lastSelectedInfo);
+                } else {
+                    // 🌟 啟動時自動選擇「今天」
+                    let realToday = new Date();
+                    let todayStr = realToday.getFullYear() + "-" + String(realToday.getMonth() + 1).padStart(2, '0') + "-" + String(realToday.getDate()).padStart(2, '0');
+                    let duty = getDailyDuty(realToday);
+                    let offInfo = isUserOff(realToday);
+                    selectDate(todayStr, duty.squad, duty.bCycle, offInfo.off, offInfo.reason);
+                }
             } catch (e) {
                 alert("讀取資料失敗，請重新登入。");
             }
@@ -248,8 +269,6 @@
                 document.getElementById('case-text').value = "";
                 document.getElementById('note-text').value = "";
             }
-            
-            document.getElementById('edit-panel').scrollIntoView({ behavior: 'smooth' });
         }
 
         function renderCalendar() {
@@ -269,8 +288,10 @@
             
             for (let i = 0; i < startWd; i++) calDiv.innerHTML += `<div class="cal-cell empty"></div>`;
             
-            // 【修改點 2】抓取「顯示其他隊伍」的勾選狀態
             let showOthers = document.getElementById('show-chk').checked;
+            
+            // 取得現實中的今天日期，用來比對呼吸燈
+            let realToday = new Date();
 
             for (let d = 1; d <= lastDay.getDate(); d++) {
                 let dt = new Date(y, m, d);
@@ -287,10 +308,14 @@
                 if (squad === '偵二隊') cls += " cell-duty";
                 else if (isOff) cls += " cell-off";
                 
-                let showSquad = squad;
+                // 🌟 判斷這格是不是「今天」，是的話加上呼吸燈 Class
+                if (dt.getFullYear() === realToday.getFullYear() && 
+                    dt.getMonth() === realToday.getMonth() && 
+                    dt.getDate() === realToday.getDate()) {
+                    cls += " today-glow";
+                }
                 
-                // 【修改點 3】智慧隱藏邏輯：
-                // 如果「沒有」勾選顯示其他隊伍，且當天不是偵二隊也不是偵六隊，就清空隊名
+                let showSquad = squad;
                 if (!showOthers && squad !== '偵二隊' && squad !== '偵六隊') {
                     showSquad = "";
                 }
@@ -302,7 +327,6 @@
                     html += `<div class="info-txt">${duty.bCycle}</div>`;
                     if (hName) html += `<div class="info-txt">[${hName}]</div>`;
                 } else if (squad === '偵六隊') {
-                    // 如果被隱藏，就連「偵六隊」三個字都不顯示，只留下 (預備)
                     html += `<div class="reserve-txt">${showSquad ? '偵六隊(預備)' : '(預備)'}</div>`;
                     if (isOff) html += `<div class="info-txt">(${offInfo.reason})</div>`;
                 } else {
