@@ -39,7 +39,7 @@
             background-color: #1E1E1E; color: white;
         }
 
-        /* 🌟 方案 D：今日專屬呼吸燈動畫 */
+        /* 呼吸燈動畫 */
         @keyframes pulseGlow {
             0% { box-shadow: inset 0 0 0 2px #007ACC, inset 0 0 5px rgba(0, 122, 204, 0.3); }
             50% { box-shadow: inset 0 0 0 2px #60A5FA, inset 0 0 15px rgba(96, 165, 250, 0.8); }
@@ -50,11 +50,23 @@
             position: relative;
             z-index: 2;
         }
+        
+        /* 系統載入中的全畫面遮罩 */
+        #loading-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #121212; z-index: 10000; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+        }
     </style>
 </head>
 <body>
 
-    <div id="login-screen">
+    <!-- 系統載入畫面 (檢查通行證用) -->
+    <div id="loading-screen">
+        <h3 style="color:#007ACC;">系統載入中...</h3>
+    </div>
+
+    <div id="login-screen" style="display: none;">
         <h2 style="color:#007ACC; margin-bottom: 5px;">🛡️ 偵二隊排班系統</h2>
         <p style="color:#A0A0A0; margin-bottom: 30px; font-size: 14px;">請輸入辦公室專屬帳號與密碼</p>
         <input type="text" id="acc-input" placeholder="帳號 (例如: zhen2)" autocapitalize="off">
@@ -72,7 +84,7 @@
         </div>
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <button onclick="loadTasks()">🔄 同步</button>
+            <button onclick="loadTasks(true)">🔄 同步</button>
             <label style="font-size: 14px;"><input type="checkbox" id="show-chk" onchange="renderCalendar()"> 顯示其他隊伍</label>
         </div>
 
@@ -93,11 +105,29 @@
         // 🔑 記得將下方替換為您的 API_KEY
         const API_KEY = "AIzaSyAJdTuKBRpj2So4QPyCllHc0ucva4qx5g8"; 
         
-        let ID_TOKEN = ""; 
+        // 從瀏覽器本地儲存讀取通行證
+        let ID_TOKEN = localStorage.getItem("duty_app_token") || ""; 
 
         let currentDate = new Date();
         let selectedDateStr = "";
         let tasks = {};
+
+        // 🌟 網頁一打開，先檢查有沒有舊的通行證
+        window.onload = async function() {
+            if (ID_TOKEN) {
+                // 有通行證，嘗試直接讀取資料
+                let success = await loadTasks(false);
+                if (success) {
+                    // 通行證有效，直接顯示主畫面
+                    document.getElementById('loading-screen').style.display = 'none';
+                    document.getElementById('app-content').style.display = 'block';
+                    return;
+                }
+            }
+            // 沒有通行證或過期了，顯示登入畫面
+            document.getElementById('loading-screen').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'flex';
+        };
 
         async function verifyLogin() {
             let acc = document.getElementById('acc-input').value.trim();
@@ -120,9 +150,12 @@
                 
                 if (data.idToken) {
                     ID_TOKEN = data.idToken; 
+                    // 🌟 登入成功，把通行證存進手機裡！
+                    localStorage.setItem("duty_app_token", ID_TOKEN);
+                    
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('app-content').style.display = 'block';
-                    loadTasks(); 
+                    loadTasks(true); 
                 } else {
                     btn.innerText = "解鎖進入";
                     document.getElementById('pwd-input').value = "";
@@ -195,9 +228,10 @@
             return { off: false, reason: "" };
         }
 
-        async function loadTasks() {
+        async function loadTasks(showAlert = false) {
             try {
                 let res = await fetch(`${FIREBASE_URL}.json?auth=${ID_TOKEN}`);
+                if (!res.ok) throw new Error("Token Invalid");
                 let data = await res.json();
                 tasks = data || {};
                 renderCalendar();
@@ -205,15 +239,18 @@
                 if(selectedDateStr) {
                     selectDate(selectedDateStr, ...lastSelectedInfo);
                 } else {
-                    // 🌟 啟動時自動選擇「今天」
                     let realToday = new Date();
                     let todayStr = realToday.getFullYear() + "-" + String(realToday.getMonth() + 1).padStart(2, '0') + "-" + String(realToday.getDate()).padStart(2, '0');
                     let duty = getDailyDuty(realToday);
                     let offInfo = isUserOff(realToday);
                     selectDate(todayStr, duty.squad, duty.bCycle, offInfo.off, offInfo.reason);
                 }
+                return true;
             } catch (e) {
-                alert("讀取資料失敗，請重新登入。");
+                // 如果失敗，把無效的舊通行證刪除
+                localStorage.removeItem("duty_app_token");
+                if (showAlert) alert("讀取資料失敗，請重新登入。");
+                return false;
             }
         }
 
@@ -224,18 +261,21 @@
             let tUrl = `${FIREBASE_URL}/${selectedDateStr}.json?auth=${ID_TOKEN}`;
             
             try {
+                let res;
                 if (cTxt || nTxt) {
                     let payload = { case: cTxt, note: nTxt };
                     tasks[selectedDateStr] = payload;
-                    await fetch(tUrl, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+                    res = await fetch(tUrl, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
                 } else {
                     delete tasks[selectedDateStr];
-                    await fetch(tUrl, { method: 'DELETE' });
+                    res = await fetch(tUrl, { method: 'DELETE' });
                 }
+                
+                if (!res.ok) throw new Error("Token Invalid");
                 renderCalendar();
                 alert("☁️ 已同步至雲端！");
             } catch (e) {
-                alert("儲存失敗：" + e);
+                alert("儲存失敗，請確認是否閒置過久需要重新整理頁面。");
             }
         }
 
@@ -289,8 +329,6 @@
             for (let i = 0; i < startWd; i++) calDiv.innerHTML += `<div class="cal-cell empty"></div>`;
             
             let showOthers = document.getElementById('show-chk').checked;
-            
-            // 取得現實中的今天日期，用來比對呼吸燈
             let realToday = new Date();
 
             for (let d = 1; d <= lastDay.getDate(); d++) {
@@ -308,7 +346,6 @@
                 if (squad === '偵二隊') cls += " cell-duty";
                 else if (isOff) cls += " cell-off";
                 
-                // 🌟 判斷這格是不是「今天」，是的話加上呼吸燈 Class
                 if (dt.getFullYear() === realToday.getFullYear() && 
                     dt.getMonth() === realToday.getMonth() && 
                     dt.getDate() === realToday.getDate()) {
