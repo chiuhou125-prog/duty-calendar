@@ -103,7 +103,6 @@
         const API_KEY = "AIzaSyAJdTuKBRpj2So4QPyCllHc0ucva4qx5g8"; 
         
         let ID_TOKEN = ""; 
-        // 🌟 新增：讀取長效換證憑證
         let REFRESH_TOKEN = localStorage.getItem("duty_app_refresh") || "";
 
         let currentDate = new Date();
@@ -112,7 +111,6 @@
 
         window.onload = async function() {
             if (REFRESH_TOKEN) {
-                // 如果有換證憑證，去後台自動換取新的通行證
                 let success = await refreshIdToken();
                 if (success) {
                     document.getElementById('loading-screen').style.display = 'none';
@@ -124,7 +122,6 @@
             document.getElementById('login-screen').style.display = 'flex';
         };
 
-        // 🌟 新增：自動換證的核心邏輯
         async function refreshIdToken() {
             let refreshUrl = `https://securetoken.googleapis.com/v1/token?key=${API_KEY}`;
             try {
@@ -136,14 +133,13 @@
                 let data = await res.json();
                 if (data.id_token) {
                     ID_TOKEN = data.id_token;
-                    REFRESH_TOKEN = data.refresh_token; // Firebase 可能會發放新的換證憑證
+                    REFRESH_TOKEN = data.refresh_token;
                     localStorage.setItem("duty_app_refresh", REFRESH_TOKEN);
                     await loadTasks(false);
                     return true;
                 }
             } catch (e) { console.error("換證失敗", e); }
             
-            // 如果換證失敗（例如帳號被停權），清空記憶
             localStorage.removeItem("duty_app_refresh");
             return false;
         }
@@ -171,7 +167,6 @@
                     ID_TOKEN = data.idToken; 
                     REFRESH_TOKEN = data.refreshToken;
                     
-                    // 🌟 登入成功！
                     localStorage.setItem("duty_app_refresh", REFRESH_TOKEN);
                     
                     document.getElementById('login-screen').style.display = 'none';
@@ -328,6 +323,11 @@
                 document.getElementById('case-text').value = "";
                 document.getElementById('note-text').value = "";
             }
+            
+            // 🌟 核心修改點：平滑捲動到編輯區塊
+            setTimeout(() => {
+                document.getElementById('edit-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100); 
         }
 
         function renderCalendar() {
