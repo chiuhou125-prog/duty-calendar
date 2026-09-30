@@ -12,7 +12,7 @@
         button { background-color: #252526; color: #E0E0E0; border: none; padding: 8px 12px; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: bold; }
         button.primary { background-color: #007ACC; color: white; width: 100%; padding: 15px; font-size: 16px; margin-top: 10px; }
         .legend { font-size: 12px; color: #A0A0A0; margin-bottom: 10px; line-height: 1.4; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background-color: #333333; border: 2px solid #333333; border-radius: 8px; overflow: hidden; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background-color: #333333; border: 2px solid #333333; border-radius: 8px; overflow: hidden; touch-action: pan-y; }
         .day-header { background-color: #1E1E1E; text-align: center; padding: 8px 0; font-size: 13px; font-weight: bold; }
         .cal-cell { background-color: #252526; min-height: 70px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px; text-align: center; cursor: pointer; }
         .cal-cell.empty { background-color: #121212; cursor: default; }
@@ -86,6 +86,8 @@
         </div>
 
         <div class="legend">💡 [⭐案件] 重要勤務 │ [📌記事] 備註 │ (預備) 偵六隊值班</div>
+        
+        <!-- 這是我們的觸控感應區 -->
         <div class="calendar-grid" id="calendar"></div>
 
         <div class="edit-panel" id="edit-panel" style="display: none;">
@@ -109,18 +111,58 @@
         let selectedDateStr = "";
         let tasks = {};
 
+        // 🌟 新增：手勢滑動控制變數
+        let touchStartX = 0;
+        let touchEndX = 0;
+        let touchStartY = 0;
+        let touchEndY = 0;
+
         window.onload = async function() {
             if (REFRESH_TOKEN) {
                 let success = await refreshIdToken();
                 if (success) {
                     document.getElementById('loading-screen').style.display = 'none';
                     document.getElementById('app-content').style.display = 'block';
+                    setupSwipeListeners(); // 啟動滑動監聽
                     return;
                 }
             }
             document.getElementById('loading-screen').style.display = 'none';
             document.getElementById('login-screen').style.display = 'flex';
         };
+
+        // 🌟 新增：設定日曆滑動監聽器
+        function setupSwipeListeners() {
+            const calendarEl = document.getElementById('calendar');
+            
+            calendarEl.addEventListener('touchstart', e => {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }, {passive: true});
+
+            calendarEl.addEventListener('touchend', e => {
+                touchEndX = e.changedTouches[0].screenX;
+                touchEndY = e.changedTouches[0].screenY;
+                handleSwipeGesture();
+            }, {passive: true});
+        }
+
+        // 🌟 新增：判斷使用者的滑動方向
+        function handleSwipeGesture() {
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            
+            // 確保水平滑動的幅度大於垂直滑動 (避免使用者其實是在上下捲動網頁)
+            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40) {
+                if (deltaX < 0) {
+                    // 往左滑 (Swipe Left) -> 下個月
+                    changeMonth(1);
+                } else if (deltaX > 0) {
+                    // 往右滑 (Swipe Right) -> 上個月
+                    changeMonth(-1);
+                }
+            }
+        }
 
         async function refreshIdToken() {
             let refreshUrl = `https://securetoken.googleapis.com/v1/token?key=${API_KEY}`;
@@ -171,6 +213,7 @@
                     
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('app-content').style.display = 'block';
+                    setupSwipeListeners(); // 登入成功後啟動滑動監聽
                     loadTasks(true); 
                 } else {
                     btn.innerText = "解鎖進入";
@@ -243,7 +286,6 @@
             
             if (duty.squad === '偵二隊') return { off: false, reason: "" };
             
-            // 🌟 修正點：將「檢查節日」移到「檢查週末」的前面！
             let hol = getHolidayName(targetDate);
             if (hol) return { off: true, reason: hol };
 
