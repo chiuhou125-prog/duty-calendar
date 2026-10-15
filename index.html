@@ -4,75 +4,214 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>偵二隊行動排班系統</title>
+    
+    <!-- 🌟 新增：在畫面渲染前瞬間讀取使用者的主題記憶，避免閃爍 -->
+    <script>
+        let savedTheme = localStorage.getItem('duty_app_theme') || 'default';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+
     <style>
-        body { background-color: #121212; color: #E0E0E0; font-family: '微軟正黑體', sans-serif; margin: 0; padding: 10px; padding-bottom: 50px; }
+        /* 🌟 預設主題：經典暗黑 (特勤風) */
+        :root, [data-theme="default"] {
+            --bg-main: #121212;
+            --text-main: #E0E0E0;
+            --btn-bg: #252526;
+            --btn-txt: #E0E0E0;
+            --primary-bg: #007ACC;
+            --primary-txt: white;
+            --grid-bg: #333333;
+            --day-header-bg: #1E1E1E;
+            --cell-bg: #252526;
+            --cell-empty: #121212;
+            --duty-bg: #1A3B32;
+            --duty-txt: #4ADE80;
+            --off-bg: #451A1F;
+            --off-txt: #FCA5A5;
+            --panel-bg: #1E1E1E;
+            --input-bg: #121212;
+            --input-border: #333;
+            --input-txt: #E4E4E7;
+            --glow-1: #007ACC;
+            --glow-2: #60A5FA;
+            --text-reserve: #93C5FD;
+            --text-case: #FFD700;
+            --text-note: #FCA5A5;
+        }
+
+        /* ☕ 主題 2：無印文青 */
+        [data-theme="minimal"] {
+            --bg-main: #F9F9F6;
+            --text-main: #4A4A4A;
+            --btn-bg: #EAEAEA;
+            --btn-txt: #5C5C5C;
+            --primary-bg: #8B7355;
+            --primary-txt: white;
+            --grid-bg: #DDDDDD;
+            --day-header-bg: #EAEAEA;
+            --cell-bg: #FFFFFF;
+            --cell-empty: #F9F9F6;
+            --duty-bg: #E8F0E8;
+            --duty-txt: #4A7A4A;
+            --off-bg: #F9EBEB;
+            --off-txt: #A85A5A;
+            --panel-bg: #FFFFFF;
+            --input-bg: #F9F9F6;
+            --input-border: #CCC;
+            --input-txt: #333;
+            --glow-1: #8B7355;
+            --glow-2: #CDBA96;
+            --text-reserve: #5B8FB9;
+            --text-case: #D97706;
+            --text-note: #E11D48;
+        }
+
+        /* 🏕️ 主題 3：自然原木 */
+        [data-theme="nature"] {
+            --bg-main: #EFECE6;
+            --text-main: #4A4036;
+            --btn-bg: #DCD3C6;
+            --btn-txt: #4A4036;
+            --primary-bg: #5B7052;
+            --primary-txt: white;
+            --grid-bg: #C1B4A4;
+            --day-header-bg: #DCD3C6;
+            --cell-bg: #F9F8F6;
+            --cell-empty: #EFECE6;
+            --duty-bg: #D5E0D1;
+            --duty-txt: #384A30;
+            --off-bg: #EEDDDB;
+            --off-txt: #8A4F4A;
+            --panel-bg: #F9F8F6;
+            --input-bg: #FFFFFF;
+            --input-border: #C1B4A4;
+            --input-txt: #4A4036;
+            --glow-1: #5B7052;
+            --glow-2: #849E79;
+            --text-reserve: #39638A;
+            --text-case: #B07D1E;
+            --text-note: #A43F3F;
+        }
+
+        /* 🌊 主題 4：休閒海洋 */
+        [data-theme="ocean"] {
+            --bg-main: #E3F2FD;
+            --text-main: #1565C0;
+            --btn-bg: #BBDEFB;
+            --btn-txt: #0D47A1;
+            --primary-bg: #0288D1;
+            --primary-txt: white;
+            --grid-bg: #90CAF9;
+            --day-header-bg: #BBDEFB;
+            --cell-bg: #FFFFFF;
+            --cell-empty: #E3F2FD;
+            --duty-bg: #E0F2F1;
+            --duty-txt: #00695C;
+            --off-bg: #FFEBEE;
+            --off-txt: #C62828;
+            --panel-bg: #FFFFFF;
+            --input-bg: #F5FAFF;
+            --input-border: #90CAF9;
+            --input-txt: #1565C0;
+            --glow-1: #0288D1;
+            --glow-2: #4FC3F7;
+            --text-reserve: #0277BD;
+            --text-case: #E65100;
+            --text-note: #AD1457;
+        }
+
+        /* 🚀 主題 5：科技霓虹 */
+        [data-theme="cyber"] {
+            --bg-main: #0B0C10;
+            --text-main: #66FCF1;
+            --btn-bg: #1F2833;
+            --btn-txt: #45A29E;
+            --primary-bg: #45A29E;
+            --primary-txt: #0B0C10;
+            --grid-bg: #1F2833;
+            --day-header-bg: #0B0C10;
+            --cell-bg: #111111;
+            --cell-empty: #000000;
+            --duty-bg: #1A0B2E;
+            --duty-txt: #D400FF;
+            --off-bg: #3A0012;
+            --off-txt: #FF003C;
+            --panel-bg: #111111;
+            --input-bg: #0B0C10;
+            --input-border: #66FCF1;
+            --input-txt: #66FCF1;
+            --glow-1: #66FCF1;
+            --glow-2: #D400FF;
+            --text-reserve: #00FFFF;
+            --text-case: #FFFF00;
+            --text-note: #FF00FF;
+        }
+
+        body { background-color: var(--bg-main); color: var(--text-main); font-family: '微軟正黑體', sans-serif; margin: 0; padding: 10px; padding-bottom: 50px; transition: all 0.3s ease; }
         .nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .nav-title { font-size: 20px; font-weight: bold; }
         .nav-controls { display: flex; align-items: center; gap: 10px; }
-        button { background-color: #252526; color: #E0E0E0; border: none; padding: 8px 12px; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: bold; }
-        button.primary { background-color: #007ACC; color: white; width: 100%; padding: 15px; font-size: 16px; margin-top: 10px; }
-        .legend { font-size: 12px; color: #A0A0A0; margin-bottom: 10px; line-height: 1.4; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background-color: #333333; border: 2px solid #333333; border-radius: 8px; overflow: hidden; touch-action: pan-y; }
-        .day-header { background-color: #1E1E1E; text-align: center; padding: 8px 0; font-size: 13px; font-weight: bold; }
-        .cal-cell { background-color: #252526; min-height: 70px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px; text-align: center; cursor: pointer; }
-        .cal-cell.empty { background-color: #121212; cursor: default; }
-        .cell-duty { background-color: #1A3B32; color: #4ADE80; }
-        .cell-off { background-color: #451A1F; color: #FCA5A5; }
+        
+        button, select { background-color: var(--btn-bg); color: var(--btn-txt); border: none; padding: 8px 12px; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: bold; outline: none; }
+        select { border: 1px solid var(--grid-bg); }
+        button.primary { background-color: var(--primary-bg); color: var(--primary-txt); width: 100%; padding: 15px; font-size: 16px; margin-top: 10px; }
+        
+        .legend { font-size: 12px; opacity: 0.8; margin-bottom: 10px; line-height: 1.4; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background-color: var(--grid-bg); border: 2px solid var(--grid-bg); border-radius: 8px; overflow: hidden; touch-action: pan-y; }
+        .day-header { background-color: var(--day-header-bg); text-align: center; padding: 8px 0; font-size: 13px; font-weight: bold; }
+        .cal-cell { background-color: var(--cell-bg); min-height: 70px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px; text-align: center; cursor: pointer; transition: background-color 0.3s; }
+        .cal-cell.empty { background-color: var(--cell-empty); cursor: default; }
+        .cell-duty { background-color: var(--duty-bg); color: var(--duty-txt); }
+        .cell-off { background-color: var(--off-bg); color: var(--off-txt); }
+        
         .date-num { font-size: 15px; font-weight: bold; margin-bottom: 2px; }
         .info-txt { font-size: 11px; margin: 1px 0; }
-        .reserve-txt { color: #93C5FD; font-size: 11px; }
-        .task-case { color: #FFD700; font-size: 11px; font-weight: bold; margin-top: 2px; }
-        .task-note { color: #FCA5A5; font-size: 11px; font-weight: bold; margin-top: 2px; }
-        .edit-panel { background-color: #1E1E1E; padding: 15px; border-radius: 8px; margin-top: 20px; }
-        .selected-date-title { font-size: 18px; color: #007ACC; font-weight: bold; margin-bottom: 15px; }
+        .reserve-txt { color: var(--text-reserve); font-size: 11px; }
+        .task-case { color: var(--text-case); font-size: 11px; font-weight: bold; margin-top: 2px; }
+        .task-note { color: var(--text-note); font-size: 11px; font-weight: bold; margin-top: 2px; }
         
-        /* 統一所有輸入框的風格 */
+        .edit-panel { background-color: var(--panel-bg); padding: 15px; border-radius: 8px; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .selected-date-title { font-size: 18px; color: var(--primary-bg); font-weight: bold; margin-bottom: 15px; }
+        
         .input-group { margin-bottom: 10px; }
         .input-group label { display: block; font-weight: bold; margin: 10px 0 5px; font-size: 14px; }
         .input-group select, .input-group input[type="text"], .input-group textarea { 
-            width: 100%; box-sizing: border-box; background-color: #121212; color: #E4E4E7; 
-            border: 1px solid #333; border-radius: 6px; padding: 10px; font-family: inherit; font-size: 14px; 
+            width: 100%; box-sizing: border-box; background-color: var(--input-bg); color: var(--input-txt); 
+            border: 1px solid var(--input-border); border-radius: 6px; padding: 10px; font-family: inherit; font-size: 14px; 
         }
         .input-group textarea { resize: vertical; }
+        .label-case { color: var(--text-case); }
+        .label-note { color: var(--text-note); }
         
-        #login-screen {
+        #login-screen, #loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #121212; z-index: 9999; display: flex;
+            background-color: var(--bg-main); z-index: 9999; display: flex;
             flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;
         }
+        #loading-screen { z-index: 10000; }
         #login-screen input { 
             width: 100%; max-width: 300px; padding: 15px; font-size: 16px; 
-            text-align: center; border-radius: 8px; border: none; margin-bottom: 15px;
-            background-color: #1E1E1E; color: white;
+            text-align: center; border-radius: 8px; border: 1px solid var(--grid-bg); margin-bottom: 15px;
+            background-color: var(--cell-bg); color: var(--text-main);
         }
 
         @keyframes pulseGlow {
-            0% { box-shadow: inset 0 0 0 2px #007ACC, inset 0 0 5px rgba(0, 122, 204, 0.3); }
-            50% { box-shadow: inset 0 0 0 2px #60A5FA, inset 0 0 15px rgba(96, 165, 250, 0.8); }
-            100% { box-shadow: inset 0 0 0 2px #007ACC, inset 0 0 5px rgba(0, 122, 204, 0.3); }
+            0% { box-shadow: inset 0 0 0 2px var(--glow-1), inset 0 0 5px rgba(0,0,0,0.1); }
+            50% { box-shadow: inset 0 0 0 2px var(--glow-2), inset 0 0 15px var(--glow-2); }
+            100% { box-shadow: inset 0 0 0 2px var(--glow-1), inset 0 0 5px rgba(0,0,0,0.1); }
         }
-        .today-glow {
-            animation: pulseGlow 2s infinite ease-in-out;
-            position: relative;
-            z-index: 2;
-        }
-        
-        #loading-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #121212; z-index: 10000; display: flex;
-            flex-direction: column; align-items: center; justify-content: center;
-        }
+        .today-glow { animation: pulseGlow 2s infinite ease-in-out; position: relative; z-index: 2; }
     </style>
 </head>
 <body>
 
     <div id="loading-screen">
-        <h3 style="color:#007ACC;">系統載入中...</h3>
+        <h3 style="color:var(--primary-bg);">系統載入中...</h3>
     </div>
 
     <div id="login-screen" style="display: none;">
-        <h2 style="color:#007ACC; margin-bottom: 5px;">🛡️ 偵二隊排班系統</h2>
-        <p style="color:#A0A0A0; margin-bottom: 30px; font-size: 14px;">請輸入辦公室專屬帳號與密碼</p>
+        <h2 style="color:var(--primary-bg); margin-bottom: 5px;">🛡️ 偵二隊排班系統</h2>
+        <p style="opacity: 0.7; margin-bottom: 30px; font-size: 14px;">請輸入辦公室專屬帳號與密碼</p>
         <input type="text" id="acc-input" placeholder="帳號 (例如: zhen2)" autocapitalize="off">
         <input type="password" id="pwd-input" placeholder="密碼">
         <button class="primary" style="max-width: 300px;" onclick="verifyLogin()">解鎖進入</button>
@@ -87,9 +226,21 @@
             </div>
         </div>
         
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <button onclick="loadTasks(true)">🔄 同步</button>
-            <label style="font-size: 14px;"><input type="checkbox" id="show-chk" onchange="renderCalendar()"> 顯示其他隊伍</label>
+        <!-- 🌟 新增：工具列加入主題選擇器 -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; gap: 8px;">
+                <button onclick="loadTasks(true)">🔄 同步</button>
+                <select id="theme-selector" onchange="changeTheme()">
+                    <option value="default">🚓 經典暗黑</option>
+                    <option value="minimal">☕ 無印文青</option>
+                    <option value="nature">🏕️ 自然原木</option>
+                    <option value="ocean">🌊 休閒海洋</option>
+                    <option value="cyber">🚀 科技霓虹</option>
+                </select>
+            </div>
+            <label style="font-size: 14px; display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" id="show-chk" onchange="renderCalendar()"> 顯示其他外勤隊
+            </label>
         </div>
 
         <div class="legend">💡 [⭐案件] 重要勤務 │ [📌記事] 備註 │ (預備) 偵六隊值班</div>
@@ -99,10 +250,9 @@
         <div class="edit-panel" id="edit-panel" style="display: none;">
             <div class="selected-date-title" id="sel-date-lbl">請選擇日期</div>
             
-            <!-- 🌟 新增：出勤與節日自訂區塊 -->
-            <div style="background-color: #252526; padding: 10px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #60A5FA;">
+            <div style="background-color: var(--cell-bg); padding: 10px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid var(--primary-bg);">
                 <div class="input-group">
-                    <label style="color:#60A5FA; margin-top:0;">🔄 手動調整出勤：</label>
+                    <label style="color:var(--text-reserve); margin-top:0;">🔄 手動調整出勤：</label>
                     <select id="override-duty">
                         <option value="">(依照系統預設排班)</option>
                         <option value="off">強制標示為「休假」</option>
@@ -110,13 +260,13 @@
                     </select>
                 </div>
                 <div class="input-group">
-                    <label style="color:#93C5FD;">🏷️ 自訂假別或節日名稱：</label>
+                    <label style="color:var(--text-main); opacity:0.8;">🏷️ 自訂假別或節日名稱：</label>
                     <input type="text" id="custom-reason" placeholder="例如：輪休、專案補休、聚餐...">
                 </div>
             </div>
 
-            <div class="input-group"><label style="color:#FFD700;">⭐ 執行案件 (重要)：</label><textarea id="case-text" rows="3"></textarea></div>
-            <div class="input-group"><label style="color:#FCA5A5;">📌 一般記事：</label><textarea id="note-text" rows="3"></textarea></div>
+            <div class="input-group"><label class="label-case">⭐ 執行案件 (重要)：</label><textarea id="case-text" rows="3"></textarea></div>
+            <div class="input-group"><label class="label-note">📌 一般記事：</label><textarea id="note-text" rows="3"></textarea></div>
             <button class="primary" onclick="saveTask()">💾 儲存任務紀錄 (自動上傳)</button>
         </div>
     </div>
@@ -134,12 +284,12 @@
         let selectedDateStr = "";
         let tasks = {};
 
-        let touchStartX = 0;
-        let touchEndX = 0;
-        let touchStartY = 0;
-        let touchEndY = 0;
+        let touchStartX = 0; let touchEndX = 0; let touchStartY = 0; let touchEndY = 0;
 
         window.onload = async function() {
+            // 初始化主題選單的顯示
+            document.getElementById('theme-selector').value = savedTheme;
+            
             if (REFRESH_TOKEN) {
                 let success = await refreshIdToken();
                 if (success) {
@@ -153,22 +303,26 @@
             document.getElementById('login-screen').style.display = 'flex';
         };
 
+        // 🌟 新增：切換主題並記憶的功能
+        function changeTheme() {
+            let selected = document.getElementById('theme-selector').value;
+            document.documentElement.setAttribute('data-theme', selected);
+            localStorage.setItem('duty_app_theme', selected);
+        }
+
         function setupSwipeListeners() {
             const calendarEl = document.getElementById('calendar');
             calendarEl.addEventListener('touchstart', e => {
-                touchStartX = e.changedTouches[0].screenX;
-                touchStartY = e.changedTouches[0].screenY;
+                touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY;
             }, {passive: true});
             calendarEl.addEventListener('touchend', e => {
-                touchEndX = e.changedTouches[0].screenX;
-                touchEndY = e.changedTouches[0].screenY;
+                touchEndX = e.changedTouches[0].screenX; touchEndY = e.changedTouches[0].screenY;
                 handleSwipeGesture();
             }, {passive: true});
         }
 
         function handleSwipeGesture() {
-            const deltaX = touchEndX - touchStartX;
-            const deltaY = touchEndY - touchStartY;
+            const deltaX = touchEndX - touchStartX; const deltaY = touchEndY - touchStartY;
             if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40) {
                 if (deltaX < 0) changeMonth(1);
                 else if (deltaX > 0) changeMonth(-1);
@@ -184,13 +338,12 @@
                 });
                 let data = await res.json();
                 if (data.id_token) {
-                    ID_TOKEN = data.id_token;
-                    REFRESH_TOKEN = data.refresh_token;
+                    ID_TOKEN = data.id_token; REFRESH_TOKEN = data.refresh_token;
                     localStorage.setItem("duty_app_refresh", REFRESH_TOKEN);
                     await loadTasks(false);
                     return true;
                 }
-            } catch (e) { console.error("換證失敗", e); }
+            } catch (e) {}
             localStorage.removeItem("duty_app_refresh");
             return false;
         }
@@ -213,8 +366,7 @@
                 let data = await res.json();
                 
                 if (data.idToken && data.refreshToken) {
-                    ID_TOKEN = data.idToken; 
-                    REFRESH_TOKEN = data.refreshToken;
+                    ID_TOKEN = data.idToken; REFRESH_TOKEN = data.refreshToken;
                     localStorage.setItem("duty_app_refresh", REFRESH_TOKEN);
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('app-content').style.display = 'block';
@@ -226,8 +378,7 @@
                     alert("帳號或密碼錯誤，請重新輸入。");
                 }
             } catch (e) {
-                btn.innerText = "解鎖進入";
-                alert("連線失敗，請檢查網路狀態。");
+                btn.innerText = "解鎖進入"; alert("連線失敗，請檢查網路狀態。");
             }
         }
 
@@ -265,9 +416,7 @@
             let squadsAug = ['偵二隊', '偵三隊', '偵四隊', '偵五隊', '偵六隊', '偵七隊', '偵八隊', '偵一隊'];
             let squadsSept = ['偵二隊', '偵三隊', '偵四隊', '偵五隊', '偵六隊', '偵七隊', '偵八隊', '科偵隊', '偵一隊'];
 
-            let curr = new Date(baseDate);
-            let squad = '偵三隊';
-            let zCount = 0;
+            let curr = new Date(baseDate); let squad = '偵三隊'; let zCount = 0;
 
             while (curr < checkDate) {
                 if (squad === '偵二隊') zCount++;
@@ -291,8 +440,7 @@
 
             if (wd === 0 || wd === 6) return { off: true, reason: "休假" };
             let checkOffset = (offset) => {
-                let d = new Date(targetDate);
-                d.setDate(d.getDate() + offset);
+                let d = new Date(targetDate); d.setDate(d.getDate() + offset);
                 return getDailyDuty(d).squad === '偵二隊';
             }
             if (wd === 5 && checkOffset(2)) return { off: true, reason: "補休" };
@@ -325,7 +473,6 @@
             }
         }
 
-        // 🌟 新增：儲存自訂狀態與假別
         async function saveTask() {
             if (!selectedDateStr) return alert("請先選擇日期");
             let cTxt = document.getElementById('case-text').value.trim();
@@ -336,7 +483,6 @@
             
             try {
                 let res;
-                // 只要有任何一個欄位有值，就存入資料庫
                 if (cTxt || nTxt || oDuty || cReason) {
                     let payload = { case: cTxt, note: nTxt, overrideDuty: oDuty, customReason: cReason };
                     tasks[selectedDateStr] = payload;
@@ -345,7 +491,6 @@
                     delete tasks[selectedDateStr];
                     res = await fetch(tUrl, { method: 'DELETE' });
                 }
-                
                 if (!res.ok) throw new Error("Token Invalid");
                 renderCalendar();
                 alert("☁️ 已同步至雲端！");
@@ -362,9 +507,7 @@
         let lastSelectedInfo = [];
 
         function selectDate(dateStr, squad, bCycle, isOff, reason) {
-            selectedDateStr = dateStr;
-            lastSelectedInfo = [squad, bCycle, isOff, reason];
-            
+            selectedDateStr = dateStr; lastSelectedInfo = [squad, bCycle, isOff, reason];
             document.getElementById('edit-panel').style.display = "block";
             let offTxt = isOff ? ` (${reason})` : "";
             let dTxt = "";
@@ -373,77 +516,52 @@
             
             document.getElementById('sel-date-lbl').innerText = `📅 ${dateStr} | ${squad}${offTxt}${dTxt}`;
             
-            // 🌟 讀取自訂狀態並更新 UI
-            let t = tasks[dateStr];
-            let tObj = {};
-            if (t) {
-                if (typeof t === 'string') tObj = { case: t };
-                else tObj = t;
-            }
+            let t = tasks[dateStr]; let tObj = {};
+            if (t) { if (typeof t === 'string') tObj = { case: t }; else tObj = t; }
             
             document.getElementById('case-text').value = tObj.case || "";
             document.getElementById('note-text').value = tObj.note || "";
             document.getElementById('override-duty').value = tObj.overrideDuty || "";
             document.getElementById('custom-reason').value = tObj.customReason || "";
             
-            setTimeout(() => {
-                document.getElementById('edit-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100); 
+            setTimeout(() => { document.getElementById('edit-panel').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100); 
         }
 
         function renderCalendar() {
-            let y = currentDate.getFullYear();
-            let m = currentDate.getMonth();
+            let y = currentDate.getFullYear(); let m = currentDate.getMonth();
             document.getElementById('month-label').innerText = `${y} 年 ${m + 1} 月`;
             
-            let calDiv = document.getElementById('calendar');
-            calDiv.innerHTML = "";
-            
+            let calDiv = document.getElementById('calendar'); calDiv.innerHTML = "";
             let days = ["一", "二", "三", "四", "五", "六", "日"];
             days.forEach(d => { calDiv.innerHTML += `<div class="day-header">${d}</div>`; });
             
-            let firstDay = new Date(y, m, 1);
-            let lastDay = new Date(y, m + 1, 0);
+            let firstDay = new Date(y, m, 1); let lastDay = new Date(y, m + 1, 0);
             let startWd = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; 
             
             for (let i = 0; i < startWd; i++) calDiv.innerHTML += `<div class="cal-cell empty"></div>`;
             
-            let showOthers = document.getElementById('show-chk').checked;
-            let realToday = new Date();
+            let showOthers = document.getElementById('show-chk').checked; let realToday = new Date();
 
             for (let d = 1; d <= lastDay.getDate(); d++) {
                 let dt = new Date(y, m, d);
                 let dStr = y + "-" + String(m+1).padStart(2,'0') + "-" + String(d).padStart(2,'0');
                 
-                let duty = getDailyDuty(dt);
-                let offInfo = isUserOff(dt);
-                let hName = getHolidayName(dt);
+                let duty = getDailyDuty(dt); let offInfo = isUserOff(dt); let hName = getHolidayName(dt);
+                let squad = duty.squad; let isOff = offInfo.off; let reason = offInfo.reason;
                 
-                let squad = duty.squad;
-                let isOff = offInfo.off;
-                let reason = offInfo.reason;
-                
-                // 🌟 核心：套用出勤覆寫與自訂原因邏輯
-                let task = tasks[dStr];
-                let tObj = {};
-                if (task) {
-                    if (typeof task === 'string') tObj = { case: task };
-                    else tObj = task;
-                }
+                let task = tasks[dStr]; let tObj = {};
+                if (task) { if (typeof task === 'string') tObj = { case: task }; else tObj = task; }
 
                 if (tObj.overrideDuty === 'off') isOff = true;
                 else if (tObj.overrideDuty === 'work') isOff = false;
 
                 let displayReason = tObj.customReason ? tObj.customReason : (reason || hName);
                 
-                // 依據新的 isOff 狀態決定底色 (就算原本是偵二隊上班日，被標記 off 也會變紅色)
                 let cls = "cal-cell";
                 if (isOff) cls += " cell-off";
                 else if (squad === '偵二隊') cls += " cell-duty";
                 
-                if (dt.getFullYear() === realToday.getFullYear() && 
-                    dt.getMonth() === realToday.getMonth() && 
-                    dt.getDate() === realToday.getDate()) {
+                if (dt.getFullYear() === realToday.getFullYear() && dt.getMonth() === realToday.getMonth() && dt.getDate() === realToday.getDate()) {
                     cls += " today-glow";
                 }
                 
@@ -473,8 +591,7 @@
                 if (tObj.note && tObj.note.trim()) html += `<div class="task-note">📌記事</div>`;
                 
                 let cellDiv = document.createElement('div');
-                cellDiv.className = cls;
-                cellDiv.innerHTML = html;
+                cellDiv.className = cls; cellDiv.innerHTML = html;
                 cellDiv.onclick = () => selectDate(dStr, squad, duty.bCycle, isOff, offInfo.reason);
                 calDiv.appendChild(cellDiv);
             }
