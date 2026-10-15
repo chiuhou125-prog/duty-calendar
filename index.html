@@ -25,8 +25,15 @@
         .task-note { color: #FCA5A5; font-size: 11px; font-weight: bold; margin-top: 2px; }
         .edit-panel { background-color: #1E1E1E; padding: 15px; border-radius: 8px; margin-top: 20px; }
         .selected-date-title { font-size: 18px; color: #007ACC; font-weight: bold; margin-bottom: 15px; }
+        
+        /* 統一所有輸入框的風格 */
+        .input-group { margin-bottom: 10px; }
         .input-group label { display: block; font-weight: bold; margin: 10px 0 5px; font-size: 14px; }
-        .input-group textarea { width: 100%; box-sizing: border-box; background-color: #121212; color: #E4E4E7; border: 1px solid #333; border-radius: 6px; padding: 10px; font-family: inherit; font-size: 14px; resize: vertical; }
+        .input-group select, .input-group input[type="text"], .input-group textarea { 
+            width: 100%; box-sizing: border-box; background-color: #121212; color: #E4E4E7; 
+            border: 1px solid #333; border-radius: 6px; padding: 10px; font-family: inherit; font-size: 14px; 
+        }
+        .input-group textarea { resize: vertical; }
         
         #login-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -87,14 +94,30 @@
 
         <div class="legend">💡 [⭐案件] 重要勤務 │ [📌記事] 備註 │ (預備) 偵六隊值班</div>
         
-        <!-- 這是我們的觸控感應區 -->
         <div class="calendar-grid" id="calendar"></div>
 
         <div class="edit-panel" id="edit-panel" style="display: none;">
             <div class="selected-date-title" id="sel-date-lbl">請選擇日期</div>
+            
+            <!-- 🌟 新增：出勤與節日自訂區塊 -->
+            <div style="background-color: #252526; padding: 10px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #60A5FA;">
+                <div class="input-group">
+                    <label style="color:#60A5FA; margin-top:0;">🔄 手動調整出勤：</label>
+                    <select id="override-duty">
+                        <option value="">(依照系統預設排班)</option>
+                        <option value="off">強制標示為「休假」</option>
+                        <option value="work">強制標示為「上班」</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label style="color:#93C5FD;">🏷️ 自訂假別或節日名稱：</label>
+                    <input type="text" id="custom-reason" placeholder="例如：輪休、專案補休、聚餐...">
+                </div>
+            </div>
+
             <div class="input-group"><label style="color:#FFD700;">⭐ 執行案件 (重要)：</label><textarea id="case-text" rows="3"></textarea></div>
             <div class="input-group"><label style="color:#FCA5A5;">📌 一般記事：</label><textarea id="note-text" rows="3"></textarea></div>
-            <button class="primary" onclick="saveTask()">💾 儲存</button>
+            <button class="primary" onclick="saveTask()">💾 儲存任務紀錄 (自動上傳)</button>
         </div>
     </div>
 
@@ -111,7 +134,6 @@
         let selectedDateStr = "";
         let tasks = {};
 
-        // 🌟 新增：手勢滑動控制變數
         let touchStartX = 0;
         let touchEndX = 0;
         let touchStartY = 0;
@@ -123,7 +145,7 @@
                 if (success) {
                     document.getElementById('loading-screen').style.display = 'none';
                     document.getElementById('app-content').style.display = 'block';
-                    setupSwipeListeners(); // 啟動滑動監聽
+                    setupSwipeListeners(); 
                     return;
                 }
             }
@@ -131,15 +153,12 @@
             document.getElementById('login-screen').style.display = 'flex';
         };
 
-        // 🌟 新增：設定日曆滑動監聽器
         function setupSwipeListeners() {
             const calendarEl = document.getElementById('calendar');
-            
             calendarEl.addEventListener('touchstart', e => {
                 touchStartX = e.changedTouches[0].screenX;
                 touchStartY = e.changedTouches[0].screenY;
             }, {passive: true});
-
             calendarEl.addEventListener('touchend', e => {
                 touchEndX = e.changedTouches[0].screenX;
                 touchEndY = e.changedTouches[0].screenY;
@@ -147,20 +166,12 @@
             }, {passive: true});
         }
 
-        // 🌟 新增：判斷使用者的滑動方向
         function handleSwipeGesture() {
             const deltaX = touchEndX - touchStartX;
             const deltaY = touchEndY - touchStartY;
-            
-            // 確保水平滑動的幅度大於垂直滑動 (避免使用者其實是在上下捲動網頁)
             if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40) {
-                if (deltaX < 0) {
-                    // 往左滑 (Swipe Left) -> 下個月
-                    changeMonth(1);
-                } else if (deltaX > 0) {
-                    // 往右滑 (Swipe Right) -> 上個月
-                    changeMonth(-1);
-                }
+                if (deltaX < 0) changeMonth(1);
+                else if (deltaX > 0) changeMonth(-1);
             }
         }
 
@@ -168,8 +179,7 @@
             let refreshUrl = `https://securetoken.googleapis.com/v1/token?key=${API_KEY}`;
             try {
                 let res = await fetch(refreshUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: `grant_type=refresh_token&refresh_token=${REFRESH_TOKEN}`
                 });
                 let data = await res.json();
@@ -181,7 +191,6 @@
                     return true;
                 }
             } catch (e) { console.error("換證失敗", e); }
-            
             localStorage.removeItem("duty_app_refresh");
             return false;
         }
@@ -189,7 +198,6 @@
         async function verifyLogin() {
             let acc = document.getElementById('acc-input').value.trim();
             let pwd = document.getElementById('pwd-input').value;
-            
             if(!acc || !pwd) return alert("請輸入帳號與密碼！");
             
             let formattedEmail = acc.includes('@') ? acc : acc + "@ntpd.gov.tw";
@@ -199,8 +207,7 @@
             
             try {
                 let res = await fetch(authUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: formattedEmail, password: pwd, returnSecureToken: true })
                 });
                 let data = await res.json();
@@ -208,12 +215,10 @@
                 if (data.idToken && data.refreshToken) {
                     ID_TOKEN = data.idToken; 
                     REFRESH_TOKEN = data.refreshToken;
-                    
                     localStorage.setItem("duty_app_refresh", REFRESH_TOKEN);
-                    
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('app-content').style.display = 'block';
-                    setupSwipeListeners(); // 登入成功後啟動滑動監聽
+                    setupSwipeListeners(); 
                     loadTasks(true); 
                 } else {
                     btn.innerText = "解鎖進入";
@@ -239,7 +244,6 @@
             "2028-01-28": "初三", "2028-01-29": "初四", "2028-01-30": "初五",
             "2028-04-04": "清明節", "2028-05-28": "端午節", "2028-10-03": "中秋節"
         };
-        
         const FIXED_HOLIDAYS = { 
             "1-1": "元旦", "2-28": "和平紀念日", "4-4": "兒童節", 
             "5-1": "勞動節", "6-15": "警察節", "9-28": "教師節", "10-10": "國慶日" 
@@ -273,24 +277,19 @@
                 squad = idx !== -1 ? seq[(idx + 1) % seq.length] : seq[0];
             }
 
-            if (squad === '偵二隊') {
-                zCount++;
-                return { squad: squad, bCycle: (zCount % 2 === 0) ? "B1日/B2夜" : "B2日/B1夜" };
-            }
+            if (squad === '偵二隊') return { squad: squad, bCycle: (zCount % 2 === 0) ? "B1日/B2夜" : "B2日/B1夜" };
             return { squad: squad, bCycle: "" };
         }
 
         function isUserOff(targetDate) {
             let duty = getDailyDuty(targetDate);
             let wd = targetDate.getDay(); 
-            
             if (duty.squad === '偵二隊') return { off: false, reason: "" };
             
             let hol = getHolidayName(targetDate);
             if (hol) return { off: true, reason: hol };
 
             if (wd === 0 || wd === 6) return { off: true, reason: "休假" };
-            
             let checkOffset = (offset) => {
                 let d = new Date(targetDate);
                 d.setDate(d.getDate() + offset);
@@ -326,16 +325,20 @@
             }
         }
 
+        // 🌟 新增：儲存自訂狀態與假別
         async function saveTask() {
             if (!selectedDateStr) return alert("請先選擇日期");
             let cTxt = document.getElementById('case-text').value.trim();
             let nTxt = document.getElementById('note-text').value.trim();
+            let oDuty = document.getElementById('override-duty').value;
+            let cReason = document.getElementById('custom-reason').value.trim();
             let tUrl = `${FIREBASE_URL}/${selectedDateStr}.json?auth=${ID_TOKEN}`;
             
             try {
                 let res;
-                if (cTxt || nTxt) {
-                    let payload = { case: cTxt, note: nTxt };
+                // 只要有任何一個欄位有值，就存入資料庫
+                if (cTxt || nTxt || oDuty || cReason) {
+                    let payload = { case: cTxt, note: nTxt, overrideDuty: oDuty, customReason: cReason };
                     tasks[selectedDateStr] = payload;
                     res = await fetch(tUrl, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
                 } else {
@@ -370,17 +373,18 @@
             
             document.getElementById('sel-date-lbl').innerText = `📅 ${dateStr} | ${squad}${offTxt}${dTxt}`;
             
+            // 🌟 讀取自訂狀態並更新 UI
             let t = tasks[dateStr];
-            if (t && typeof t === 'object') {
-                document.getElementById('case-text').value = t.case || "";
-                document.getElementById('note-text').value = t.note || "";
-            } else if (typeof t === 'string') {
-                document.getElementById('case-text').value = t;
-                document.getElementById('note-text').value = "";
-            } else {
-                document.getElementById('case-text').value = "";
-                document.getElementById('note-text').value = "";
+            let tObj = {};
+            if (t) {
+                if (typeof t === 'string') tObj = { case: t };
+                else tObj = t;
             }
+            
+            document.getElementById('case-text').value = tObj.case || "";
+            document.getElementById('note-text').value = tObj.note || "";
+            document.getElementById('override-duty').value = tObj.overrideDuty || "";
+            document.getElementById('custom-reason').value = tObj.customReason || "";
             
             setTimeout(() => {
                 document.getElementById('edit-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -417,10 +421,25 @@
                 
                 let squad = duty.squad;
                 let isOff = offInfo.off;
+                let reason = offInfo.reason;
                 
+                // 🌟 核心：套用出勤覆寫與自訂原因邏輯
+                let task = tasks[dStr];
+                let tObj = {};
+                if (task) {
+                    if (typeof task === 'string') tObj = { case: task };
+                    else tObj = task;
+                }
+
+                if (tObj.overrideDuty === 'off') isOff = true;
+                else if (tObj.overrideDuty === 'work') isOff = false;
+
+                let displayReason = tObj.customReason ? tObj.customReason : (reason || hName);
+                
+                // 依據新的 isOff 狀態決定底色 (就算原本是偵二隊上班日，被標記 off 也會變紅色)
                 let cls = "cal-cell";
-                if (squad === '偵二隊') cls += " cell-duty";
-                else if (isOff) cls += " cell-off";
+                if (isOff) cls += " cell-off";
+                else if (squad === '偵二隊') cls += " cell-duty";
                 
                 if (dt.getFullYear() === realToday.getFullYear() && 
                     dt.getMonth() === realToday.getMonth() && 
@@ -429,29 +448,29 @@
                 }
                 
                 let showSquad = squad;
-                if (!showOthers && squad !== '偵二隊' && squad !== '偵六隊') {
-                    showSquad = "";
-                }
+                if (!showOthers && squad !== '偵二隊' && squad !== '偵六隊') showSquad = "";
 
                 let html = `<div class="date-num">${d}</div>`;
                 
                 if (squad === '偵二隊') {
                     if (showSquad) html += `<div class="info-txt">${showSquad}</div>`;
-                    html += `<div class="info-txt">${duty.bCycle}</div>`;
-                    if (hName) html += `<div class="info-txt">[${hName}]</div>`;
+                    if (!isOff) html += `<div class="info-txt">${duty.bCycle}</div>`;
+                    if (displayReason) {
+                        if (isOff) html += `<div class="info-txt">(${displayReason})</div>`;
+                        else html += `<div class="info-txt">[${displayReason}]</div>`;
+                    }
                 } else if (squad === '偵六隊') {
                     html += `<div class="reserve-txt">${showSquad ? '偵六隊(預備)' : '(預備)'}</div>`;
-                    if (isOff) html += `<div class="info-txt">(${offInfo.reason})</div>`;
+                    if (isOff && displayReason) html += `<div class="info-txt">(${displayReason})</div>`;
+                    else if (!isOff && tObj.customReason) html += `<div class="info-txt">[${tObj.customReason}]</div>`;
                 } else {
                     if (showSquad) html += `<div class="info-txt">${showSquad}</div>`;
-                    if (isOff) html += `<div class="info-txt">(${offInfo.reason})</div>`;
+                    if (isOff && displayReason) html += `<div class="info-txt">(${displayReason})</div>`;
+                    else if (!isOff && tObj.customReason) html += `<div class="info-txt">[${tObj.customReason}]</div>`;
                 }
                 
-                let task = tasks[dStr];
-                if (task) {
-                    if (typeof task === 'string' && task.trim() || (task.case && task.case.trim())) html += `<div class="task-case">⭐案件</div>`;
-                    if (task.note && task.note.trim()) html += `<div class="task-note">📌記事</div>`;
-                }
+                if (tObj.case && tObj.case.trim()) html += `<div class="task-case">⭐案件</div>`;
+                if (tObj.note && tObj.note.trim()) html += `<div class="task-note">📌記事</div>`;
                 
                 let cellDiv = document.createElement('div');
                 cellDiv.className = cls;
