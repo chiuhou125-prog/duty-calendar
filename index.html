@@ -114,35 +114,42 @@
   .sw { width: 11px; height: 11px; border-radius: 3px; display: inline-block; border: 1px solid; }
   .banner { background: var(--off-bg); color: var(--off-fg); border-radius: 10px; padding: 8px 12px; font-size: 13px; margin-bottom: 8px; }
 
-  /* 月曆 */
-  :root { --cell-h: 78px; }
-  .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; background: var(--border);
-    border: 1px solid var(--border); border-radius: 12px; overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
-  .wd { background: var(--surface2); color: var(--muted); text-align: center; font-size: 12px; font-weight: 700; padding: 6px 0; }
-  .wd.we { color: var(--weekend-fg); }
-  .cell { background: var(--cell); height: var(--cell-h); padding: 4px 3px 2px 4px; overflow: hidden; cursor: pointer;
-    display: flex; flex-direction: column; min-width: 0; position: relative; -webkit-touch-callout: none; }
+  /* 月曆：格子滿版、每件事一條彩色標籤；字級依螢幕寬度計算，保證一格至少放得下 5 個字 */
+  :root { --chip-fs: clamp(9.5px, calc((100vw - 8px) / 7 / 5.25), 13px); --chip-h: calc(var(--chip-fs) * 1.62); --chip-p: 58%; }
+  [data-theme="minimal"], [data-theme="nature"], [data-theme="ocean"] { --chip-p: 100%; }
+  .calwrap { margin: 0 -10px; }
+  .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); background: var(--bg); border-top: 1px solid var(--border);
+    touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+  .wd { color: var(--muted); text-align: center; font-size: 12px; font-weight: 700; padding: 7px 0 6px; border-bottom: 1px solid var(--border); background: var(--bg); }
+  .wd.sun { color: var(--weekend-fg); }
+  .wd.sat { color: var(--reserve-fg); }
+  .cell { background: var(--cell); min-height: 88px; padding: 3px 1px 5px; cursor: pointer; display: flex; flex-direction: column; gap: 2px;
+    min-width: 0; position: relative; border-bottom: 1px solid var(--border); -webkit-touch-callout: none; }
+  .cell + .cell { box-shadow: -1px 0 0 0 color-mix(in srgb, var(--border) 55%, transparent); }
   .cell.other { background: var(--cell-other); }
+  .cell.other .num, .cell.other .ev { opacity: .5; }
   .cell.off { background: var(--off-bg); }
   .cell.duty { background: var(--duty-bg); }
-  .cell.sel { box-shadow: inset 0 0 0 2px var(--accent); }
-  .cell.msel::after { content: "✓"; position: absolute; right: 3px; bottom: 2px; background: var(--accent); color: var(--accent-text);
+  .cell.sel, .cell.sel + .cell.sel { box-shadow: inset 0 0 0 2px var(--accent); }
+  .cell.msel::after { content: "✓"; position: absolute; right: 2px; top: 2px; background: var(--accent); color: var(--accent-text);
     font-size: 10px; font-weight: 800; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-  .top { display: flex; align-items: center; min-width: 0; height: 19px; }
-  .num { font-weight: 800; font-size: 14px; line-height: 19px; color: var(--text); }
-  .num.today { background: var(--accent); color: var(--accent-text); border-radius: 10px; padding: 0 6px; }
-  .cell.other .num { color: var(--muted); }
-  .rt { margin-left: auto; display: flex; align-items: center; gap: 2px; min-width: 0; padding-left: 2px; }
-  .hol { font-size: 9.5px; color: var(--holiday-fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-  .mk { color: var(--manual-fg); font-size: 10px; font-weight: 800; }
-  .ln { font-size: 10.5px; line-height: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .ln.b { font-weight: 800; }
-  .ln.tight { font-size: 10px; letter-spacing: -.3px; }
+  .top { display: flex; justify-content: center; align-items: center; height: 22px; flex: none; }
+  .num { font-weight: 800; font-size: 15px; line-height: 22px; color: var(--text); min-width: 22px; text-align: center; }
+  .cell.sun .num { color: var(--weekend-fg); }
+  .cell.sat .num { color: var(--reserve-fg); }
+  .num.today { background: var(--accent); color: var(--accent-text) !important; border-radius: 11px; padding: 0 6px; }
+  .mk { position: absolute; right: 3px; top: 2px; color: var(--manual-fg); font-size: 10px; font-weight: 800; }
+  .ev { --c: var(--muted); display: block; flex: none; height: var(--chip-h); line-height: var(--chip-h); font-size: var(--chip-fs);
+    font-weight: 700; letter-spacing: -.2px; color: #FFFFFF; background: var(--c); background: color-mix(in srgb, var(--c) var(--chip-p), #000);
+    border-radius: 3px; padding: 0 1px; white-space: nowrap; overflow: hidden; text-align: center; }
+  .ev.more { background: transparent; color: var(--muted); font-weight: 600; }
+  .legend .ev { display: inline-block; height: auto; line-height: 17px; font-size: 11px; padding: 0 6px; letter-spacing: 0; }
   @media (min-width: 600px) {
-    :root { --cell-h: 104px; }
+    :root { --chip-fs: 12.5px; }
+    .calwrap { margin: 0; }
+    .cal { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .cell { min-height: 116px; padding: 4px 3px 6px; }
     .num { font-size: 16px; }
-    .hol { font-size: 11px; }
-    .ln { font-size: 12.5px; line-height: 17px; }
     .wd { font-size: 13px; padding: 8px 0; }
   }
   .status { font-size: 12px; color: var(--muted); margin: 10px 2px 0; min-height: 16px; }
@@ -241,7 +248,7 @@
   </div>
   <div class="legend" id="legend"></div>
   <div class="banner hidden" id="banner"></div>
-  <div class="cal" id="cal"></div>
+  <div class="calwrap"><div class="cal" id="cal"></div></div>
   <div class="status" id="status"></div>
 </div>
 
@@ -651,23 +658,23 @@ function describe(info) {
   if (info.role === "duty" && state.identity.name) { const s = shiftOf(info.bCycle, state.identity.team); if (s) us += `｜你：${s}`; }
   return `${duty}｜${us}`;
 }
-function cellLines(info, inMonth, wide) {
-  const L = [];
-  // 手機直式格子很窄：班別去掉斜線、節日改成獨立一行、多人請假只顯示人數
-  if (info.role === "duty") L.push([wide ? `值班 ${info.bCycle}`.trim() : (info.bCycle.replace("/", "") || "值班"), "duty-fg", true, !wide]);
-  else if (info.role === "duty_off") L.push([wide ? "本隊值班日" : "值班日", "muted", false]);
-  else if (info.role === "reserve") L.push(["預備", "reserve-fg", true]);
-  if (!inMonth) return L.map(x => [x[0], "muted", false, x[3]]);
-  if (!wide && info.holiday) L.push([info.holiday, "holiday-fg", false, true]);
-  if (info.isOff) { if (info.reason && info.reason !== "休假" && info.reason !== info.holiday) L.push([info.reason, "off-fg", false]); }
-  else if (info.label) L.push([info.label, "text", false]);
+const LEAVE_SHORT = { "休假": "休", "補休": "補", "事假": "事", "病假": "病", "公假": "公", "公差": "差", "喪假": "喪", "婚假": "婚" };
+/** 一天要顯示的標籤：[文字, 顏色變數]。手機直式時文字精簡，方便一格放下。 */
+function cellEvents(info, wide) {
+  const E = [];
+  if (info.role === "duty") E.push([wide ? `值班 ${info.bCycle}`.trim() : (info.bCycle.replace("/", "") || "本隊值班"), "duty-fg"]);
+  else if (info.role === "duty_off") E.push(["本隊值班日", "muted"]);
+  else if (info.role === "reserve") E.push(["預備", "reserve-fg"]);
+  if (info.holiday) E.push([info.holiday, "holiday-fg"]);
+  if (info.isOff) { if (info.reason && info.reason !== "休假" && info.reason !== info.holiday) E.push([info.reason, "off-fg"]); }
+  else if (info.label) E.push([info.label, "manual-fg"]);
   const lv = Object.entries(info.leaves).sort((a, b) => a[0].localeCompare(b[0], "zh-Hant"));
-  if (lv.length) L.push(["👤" + (wide ? lv.map(([n, v]) => (v ? `${n}(${v[0]})` : n)).join("、") : lv.length > 1 ? `${lv.length}人` : lv[0][0]), "leave-fg", false]);
+  for (const [n, v] of lv) E.push([wide ? `${n} ${v || "請假"}` : `${n}${LEAVE_SHORT[v] || (v ? v[0] : "")}`, "leave-fg"]);
   const c = firstLine(info.task.case), n = firstLine(info.task.note);
-  if (c) L.push(["⭐" + c, "case-fg", false]);
-  if (n) L.push(["📌" + n, "note-fg", false]);
-  if (state.showOthers && info.squad !== state.rules.my && info.squad !== "未知") L.push([info.squad, "muted", false]);
-  return L;
+  if (c) E.push([c, "case-fg"]);
+  if (n) E.push([n, "note-fg"]);
+  if (state.showOthers && info.squad !== state.rules.my && info.squad !== "未知") E.push([`${info.squad}值班`, "muted"]);
+  return E;
 }
 
 // ==========================================
@@ -702,13 +709,13 @@ const confirmBox = async (title, msg, yes = "確定", danger = false) =>
   (await ask(title, msg, [["no", "取消", ""], ["yes", yes, danger ? "danger" : "primary"]])) === "yes";
 
 function renderLegend() {
-  const r = state.rules;
+  const r = state.rules, ev = (t, c) => `<span class="ev" style="--c:var(--${c})">${esc(t)}</span>`;
   $("#legend").innerHTML =
-    `<span><i class="sw" style="background:var(--duty-bg);border-color:var(--duty-fg)"></i>${esc(r.my)}值班</span>` +
+    `<span>${ev(r.my + "值班", "duty-fg")}</span>` +
     `<span><i class="sw" style="background:var(--off-bg);border-color:var(--off-fg)"></i>本隊休假</span>` +
-    `<span><i class="sw" style="background:var(--accent);border-color:var(--accent)"></i>今天</span>` +
-    `<span><b style="color:var(--reserve-fg)">預備</b>＝${esc(r.reserve)}值班</span>` +
-    `<span style="color:var(--leave-fg)">👤<span style="color:var(--muted)">人員請假</span></span>` +
+    `<span>${ev("預備", "reserve-fg")}${esc(r.reserve)}值班</span>` +
+    `<span>${ev("節日", "holiday-fg")}</span><span>${ev("人員請假", "leave-fg")}</span>` +
+    `<span>${ev("案件", "case-fg")}</span><span>${ev("記事", "note-fg")}</span>` +
     `<span><b style="color:var(--manual-fg)">✎</b>手動調整過</span>`;
   $("#login-title").textContent = `${r.my}行事曆`;
   document.title = `${r.my}行事曆`;
@@ -722,24 +729,18 @@ function renderCalendar() {
   const first = new Date(y, m, 1), lead = first.getDay(), ndays = new Date(y, m + 1, 0).getDate();
   const weeks = Math.ceil((lead + ndays) / 7), start = addDays(first, -lead);
   const today = ymd(new Date()), sel = selectedSet();
-  const wide = window.innerWidth >= 600, maxLines = wide ? 4 : 3;
-  let html = WD.split("").map((d, i) => `<div class="wd${i === 0 || i === 6 ? " we" : ""}">${d}</div>`).join("");
+  const wide = window.innerWidth >= 600, maxEv = wide ? 5 : 4;
+  let html = WD.split("").map((d, i) => `<div class="wd${i === 0 ? " sun" : i === 6 ? " sat" : ""}">${d}</div>`).join("");
   for (let i = 0; i < weeks * 7; i++) {
     const dt = addDays(start, i), d = ymd(dt), inMonth = dt.getMonth() === m, info = dayInfo(dt);
-    let cls = "cell";
+    let cls = "cell" + (dt.getDay() === 0 ? " sun" : dt.getDay() === 6 ? " sat" : "");
     if (!inMonth) cls += " other"; else if (info.isOff) cls += " off"; else if (info.role === "duty") cls += " duty";
     if (sel.has(d)) cls += state.multiMode ? " sel msel" : " sel";
-    let lines = cellLines(info, inMonth, wide);
-    if (lines.length > maxLines) {
-      const more = lines.length - maxLines + 1;
-      lines = lines.slice(0, maxLines - 1).concat([[wide ? `…還有 ${more} 項` : `＋${more}`, "muted", false]]);
-    }
-    let rt = "";
-    const hol = wide && inMonth && info.holiday;
-    if (inMonth && (info.manual || hol))
-      rt = `<span class="rt">${hol ? `<span class="hol">${esc(info.holiday)}</span>` : ""}${info.manual ? '<span class="mk">✎</span>' : ""}</span>`;
-    html += `<div class="${cls}" data-d="${d}"><div class="top"><span class="num${d === today ? " today" : ""}">${dt.getDate()}</span>${rt}</div>` +
-      lines.map(([t, c, b, tight]) => `<div class="ln${b ? " b" : ""}${tight ? " tight" : ""}" style="color:var(--${c})">${esc(t)}</div>`).join("") + `</div>`;
+    let evs = cellEvents(info, wide);
+    if (evs.length > maxEv) evs = evs.slice(0, maxEv - 1).concat([[`＋${evs.length - maxEv + 1}`, "more"]]);
+    html += `<div class="${cls}" data-d="${d}"><div class="top"><span class="num${d === today ? " today" : ""}">${dt.getDate()}</span></div>` +
+      (inMonth && info.manual ? '<span class="mk">✎</span>' : "") +
+      evs.map(([t, c]) => c === "more" ? `<span class="ev more">${esc(t)}</span>` : `<span class="ev" style="--c:var(--${c})">${esc(t)}</span>`).join("") + `</div>`;
   }
   $("#cal").innerHTML = html;
 }
@@ -1448,4 +1449,5 @@ startup();
 </script>
 </body>
 </html>
+
 
