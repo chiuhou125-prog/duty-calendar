@@ -1,601 +1,1445 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>偵二隊行動排班系統</title>
-    
-    <!-- 🌟 新增：在畫面渲染前瞬間讀取使用者的主題記憶，避免閃爍 -->
-    <script>
-        let savedTheme = localStorage.getItem('duty_app_theme') || 'default';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-    </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#14161B">
+<title>偵二隊行事曆</title>
+<script>
+  // 畫面出來前先套用記住的主題，避免閃爍（舊版的「科技霓虹」改用經典暗黑）
+  (function () {
+    var t = localStorage.getItem("duty_app_theme") || "default";
+    if (["default", "minimal", "nature", "ocean", "minecraft"].indexOf(t) < 0) t = "default";
+    document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+<style>
+  /* ===== 主題配色（與電腦版相同） ===== */
+  :root, [data-theme="default"] {
+    --bg:#14161B; --surface:#1C1F26; --surface2:#272B34; --border:#2D323C; --text:#E7E9EE; --muted:#8C94A3;
+    --accent:#4C8DFF; --accent-text:#FFFFFF; --cell:#1C1F26; --cell-other:#17191E; --duty-bg:#16372A; --duty-fg:#5FE3A1;
+    --off-bg:#3B1F27; --off-fg:#FF9DAA; --reserve-fg:#7DB3FF; --holiday-fg:#FFB870; --case-fg:#FFD166; --note-fg:#B8C4FF;
+    --manual-fg:#FFD166; --weekend-fg:#FF8A96; --leave-fg:#6FD8E8; --shadow:rgba(0,0,0,.45);
+  }
+  [data-theme="minimal"] {
+    --bg:#F2EFE9; --surface:#FBFAF7; --surface2:#ECE7DF; --border:#DCD5CA; --text:#38342E; --muted:#8B8478;
+    --accent:#8A6A4F; --accent-text:#FFFFFF; --cell:#FDFCF9; --cell-other:#F1EDE6; --duty-bg:#E2EDE2; --duty-fg:#356B43;
+    --off-bg:#F7E2DE; --off-fg:#A3443D; --reserve-fg:#3F6E95; --holiday-fg:#B0601A; --case-fg:#9C6A00; --note-fg:#5A6290;
+    --manual-fg:#B0601A; --weekend-fg:#B0504A; --leave-fg:#2F7F86; --shadow:rgba(60,50,40,.25);
+  }
+  [data-theme="nature"] {
+    --bg:#E2DCD0; --surface:#F1EDE4; --surface2:#E3DBCC; --border:#CEC4B1; --text:#3B342B; --muted:#7C7363;
+    --accent:#56703F; --accent-text:#FFFFFF; --cell:#F6F2EA; --cell-other:#E8E2D6; --duty-bg:#D9E5CE; --duty-fg:#36502A;
+    --off-bg:#EED8CF; --off-fg:#8E4635; --reserve-fg:#3A5E7C; --holiday-fg:#9A5F15; --case-fg:#8F6410; --note-fg:#58608A;
+    --manual-fg:#9A5F15; --weekend-fg:#9A4535; --leave-fg:#2E6E70; --shadow:rgba(60,50,30,.25);
+  }
+  [data-theme="ocean"] {
+    --bg:#E4EDF5; --surface:#F7FAFD; --surface2:#E3EBF3; --border:#CAD7E4; --text:#1B3247; --muted:#677E94;
+    --accent:#2E77B8; --accent-text:#FFFFFF; --cell:#FAFCFE; --cell-other:#EDF2F7; --duty-bg:#DBF0EA; --duty-fg:#0E6B5B;
+    --off-bg:#FBE4E7; --off-fg:#AE3445; --reserve-fg:#2E77B8; --holiday-fg:#BF5F08; --case-fg:#AD7314; --note-fg:#6644B8;
+    --manual-fg:#BF5F08; --weekend-fg:#BE3A33; --leave-fg:#0B7F86; --shadow:rgba(20,50,80,.22);
+  }
+  [data-theme="minecraft"] {
+    --bg:#2A2A2A; --surface:#373737; --surface2:#4A4A4A; --border:#151515; --text:#FFFFFF; --muted:#B5B5B5;
+    --accent:#5CB83C; --accent-text:#FFFFFF; --cell:#6B6B6B; --cell-other:#4E4E4E; --duty-bg:#4A7F30; --duty-fg:#FFFF55;
+    --off-bg:#983628; --off-fg:#FFE3DE; --reserve-fg:#7FFFFF; --holiday-fg:#FFB733; --case-fg:#FFFF55; --note-fg:#FF88FF;
+    --manual-fg:#FFB733; --weekend-fg:#FF6B6B; --leave-fg:#AAFFAA; --shadow:rgba(0,0,0,.5);
+  }
 
-    <style>
-        /* 🌟 預設主題：經典暗黑 (特勤風) */
-        :root, [data-theme="default"] {
-            --bg-main: #121212;
-            --text-main: #E0E0E0;
-            --btn-bg: #252526;
-            --btn-txt: #E0E0E0;
-            --primary-bg: #007ACC;
-            --primary-txt: white;
-            --grid-bg: #333333;
-            --day-header-bg: #1E1E1E;
-            --cell-bg: #252526;
-            --cell-empty: #121212;
-            --duty-bg: #1A3B32;
-            --duty-txt: #4ADE80;
-            --off-bg: #451A1F;
-            --off-txt: #FCA5A5;
-            --panel-bg: #1E1E1E;
-            --input-bg: #121212;
-            --input-border: #333;
-            --input-txt: #E4E4E7;
-            --glow-1: #007ACC;
-            --glow-2: #60A5FA;
-            --text-reserve: #93C5FD;
-            --text-case: #FFD700;
-            --text-note: #FCA5A5;
-        }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body {
+    font-family: "Microsoft JhengHei", "微軟正黑體", "PingFang TC", "Noto Sans TC", "Noto Sans CJK TC", sans-serif;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    -webkit-text-size-adjust: 100%;
+  }
+  body.lock { overflow: hidden; }
+  .hidden { display: none !important; }
+  button { font: inherit; }
 
-        /* ☕ 主題 2：無印文青 */
-        [data-theme="minimal"] {
-            --bg-main: #F9F9F6;
-            --text-main: #4A4A4A;
-            --btn-bg: #EAEAEA;
-            --btn-txt: #5C5C5C;
-            --primary-bg: #8B7355;
-            --primary-txt: white;
-            --grid-bg: #DDDDDD;
-            --day-header-bg: #EAEAEA;
-            --cell-bg: #FFFFFF;
-            --cell-empty: #F9F9F6;
-            --duty-bg: #E8F0E8;
-            --duty-txt: #4A7A4A;
-            --off-bg: #F9EBEB;
-            --off-txt: #A85A5A;
-            --panel-bg: #FFFFFF;
-            --input-bg: #F9F9F6;
-            --input-border: #CCC;
-            --input-txt: #333;
-            --glow-1: #8B7355;
-            --glow-2: #CDBA96;
-            --text-reserve: #5B8FB9;
-            --text-case: #D97706;
-            --text-note: #E11D48;
-        }
+  /* 按鈕、輸入 */
+  .btn { background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 10px;
+    padding: 9px 13px; font-size: 14px; font-weight: 700; cursor: pointer; min-height: 40px; white-space: nowrap; }
+  .btn:active { filter: brightness(1.15); }
+  .btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .btn.danger { color: var(--off-fg); }
+  .btn.ghost { background: var(--surface); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn.block { width: 100%; }
+  input[type=text], input[type=password], select, textarea {
+    width: 100%; background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 11px; font: inherit; font-size: 16px; outline: none; }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  input:disabled, select:disabled, textarea:disabled { color: var(--muted); }
+  textarea { resize: vertical; min-height: 64px; line-height: 1.45; }
+  label.chk { display: flex; align-items: center; gap: 8px; font-size: 15px; padding: 6px 0; cursor: pointer; }
+  label.chk input { width: 20px; height: 20px; accent-color: var(--accent); }
+  .sec { font-size: 13px; font-weight: 700; color: var(--muted); margin: 16px 0 6px; }
+  .hint { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .row > .grow { flex: 1; min-width: 0; }
 
-        /* 🏕️ 主題 3：自然原木 */
-        [data-theme="nature"] {
-            --bg-main: #EFECE6;
-            --text-main: #4A4036;
-            --btn-bg: #DCD3C6;
-            --btn-txt: #4A4036;
-            --primary-bg: #5B7052;
-            --primary-txt: white;
-            --grid-bg: #C1B4A4;
-            --day-header-bg: #DCD3C6;
-            --cell-bg: #F9F8F6;
-            --cell-empty: #EFECE6;
-            --duty-bg: #D5E0D1;
-            --duty-txt: #384A30;
-            --off-bg: #EEDDDB;
-            --off-txt: #8A4F4A;
-            --panel-bg: #F9F8F6;
-            --input-bg: #FFFFFF;
-            --input-border: #C1B4A4;
-            --input-txt: #4A4036;
-            --glow-1: #5B7052;
-            --glow-2: #849E79;
-            --text-reserve: #39638A;
-            --text-case: #B07D1E;
-            --text-note: #A43F3F;
-        }
+  /* 分段按鈕與小標籤 */
+  .seg { display: flex; background: var(--surface2); border-radius: 10px; padding: 3px; gap: 3px; }
+  .seg button { flex: 1; border: 0; background: transparent; color: var(--text); font-size: 15px; font-weight: 700;
+    padding: 9px 0; border-radius: 8px; cursor: pointer; }
+  .seg button.on { background: var(--accent); color: var(--accent-text); }
+  .seg.off button { color: var(--muted); }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+  .chip { background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 999px;
+    padding: 6px 13px; font-size: 14px; cursor: pointer; }
 
-        /* 🌊 主題 4：休閒海洋 */
-        [data-theme="ocean"] {
-            --bg-main: #E3F2FD;
-            --text-main: #1565C0;
-            --btn-bg: #BBDEFB;
-            --btn-txt: #0D47A1;
-            --primary-bg: #0288D1;
-            --primary-txt: white;
-            --grid-bg: #90CAF9;
-            --day-header-bg: #BBDEFB;
-            --cell-bg: #FFFFFF;
-            --cell-empty: #E3F2FD;
-            --duty-bg: #E0F2F1;
-            --duty-txt: #00695C;
-            --off-bg: #FFEBEE;
-            --off-txt: #C62828;
-            --panel-bg: #FFFFFF;
-            --input-bg: #F5FAFF;
-            --input-border: #90CAF9;
-            --input-txt: #1565C0;
-            --glow-1: #0288D1;
-            --glow-2: #4FC3F7;
-            --text-reserve: #0277BD;
-            --text-case: #E65100;
-            --text-note: #AD1457;
-        }
+  /* 主畫面 */
+  .app { max-width: 1000px; margin: 0 auto; padding: 12px 10px 24px; }
+  .head { display: flex; align-items: center; gap: 8px; }
+  .title { font-size: 22px; font-weight: 800; letter-spacing: .5px; }
+  .roc { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .nav { margin-left: auto; display: flex; gap: 6px; }
+  .nav .btn { padding: 8px 12px; }
+  .tools { display: flex; gap: 6px; margin: 10px 0 8px; align-items: center; }
+  .tools .btn { padding: 8px 11px; font-size: 13px; }
+  .tools .me { max-width: 42vw; overflow: hidden; text-overflow: ellipsis; }
+  .tools .btn.on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .legend { display: flex; gap: 12px; font-size: 11.5px; color: var(--muted); margin: 0 2px 8px; overflow-x: auto;
+    white-space: nowrap; scrollbar-width: none; }
+  .legend::-webkit-scrollbar { display: none; }
+  .legend span { display: inline-flex; align-items: center; gap: 4px; }
+  .sw { width: 11px; height: 11px; border-radius: 3px; display: inline-block; border: 1px solid; }
+  .banner { background: var(--off-bg); color: var(--off-fg); border-radius: 10px; padding: 8px 12px; font-size: 13px; margin-bottom: 8px; }
 
-        /* 🚀 主題 5：科技霓虹 */
-        [data-theme="cyber"] {
-            --bg-main: #0B0C10;
-            --text-main: #66FCF1;
-            --btn-bg: #1F2833;
-            --btn-txt: #45A29E;
-            --primary-bg: #45A29E;
-            --primary-txt: #0B0C10;
-            --grid-bg: #1F2833;
-            --day-header-bg: #0B0C10;
-            --cell-bg: #111111;
-            --cell-empty: #000000;
-            --duty-bg: #1A0B2E;
-            --duty-txt: #D400FF;
-            --off-bg: #3A0012;
-            --off-txt: #FF003C;
-            --panel-bg: #111111;
-            --input-bg: #0B0C10;
-            --input-border: #66FCF1;
-            --input-txt: #66FCF1;
-            --glow-1: #66FCF1;
-            --glow-2: #D400FF;
-            --text-reserve: #00FFFF;
-            --text-case: #FFFF00;
-            --text-note: #FF00FF;
-        }
+  /* 月曆 */
+  :root { --cell-h: 78px; }
+  .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; background: var(--border);
+    border: 1px solid var(--border); border-radius: 12px; overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+  .wd { background: var(--surface2); color: var(--muted); text-align: center; font-size: 12px; font-weight: 700; padding: 6px 0; }
+  .wd.we { color: var(--weekend-fg); }
+  .cell { background: var(--cell); height: var(--cell-h); padding: 4px 3px 2px 4px; overflow: hidden; cursor: pointer;
+    display: flex; flex-direction: column; min-width: 0; position: relative; -webkit-touch-callout: none; }
+  .cell.other { background: var(--cell-other); }
+  .cell.off { background: var(--off-bg); }
+  .cell.duty { background: var(--duty-bg); }
+  .cell.sel { box-shadow: inset 0 0 0 2px var(--accent); }
+  .cell.msel::after { content: "✓"; position: absolute; right: 3px; bottom: 2px; background: var(--accent); color: var(--accent-text);
+    font-size: 10px; font-weight: 800; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .top { display: flex; align-items: center; min-width: 0; height: 19px; }
+  .num { font-weight: 800; font-size: 14px; line-height: 19px; color: var(--text); }
+  .num.today { background: var(--accent); color: var(--accent-text); border-radius: 10px; padding: 0 6px; }
+  .cell.other .num { color: var(--muted); }
+  .rt { margin-left: auto; display: flex; align-items: center; gap: 2px; min-width: 0; padding-left: 2px; }
+  .hol { font-size: 9.5px; color: var(--holiday-fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .mk { color: var(--manual-fg); font-size: 10px; font-weight: 800; }
+  .ln { font-size: 10.5px; line-height: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ln.b { font-weight: 800; }
+  .ln.tight { font-size: 10px; letter-spacing: -.3px; }
+  @media (min-width: 600px) {
+    :root { --cell-h: 104px; }
+    .num { font-size: 16px; }
+    .hol { font-size: 11px; }
+    .ln { font-size: 12.5px; line-height: 17px; }
+    .wd { font-size: 13px; padding: 8px 0; }
+  }
+  .status { font-size: 12px; color: var(--muted); margin: 10px 2px 0; min-height: 16px; }
 
-        body { background-color: var(--bg-main); color: var(--text-main); font-family: '微軟正黑體', sans-serif; margin: 0; padding: 10px; padding-bottom: 50px; transition: all 0.3s ease; }
-        .nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .nav-title { font-size: 20px; font-weight: bold; }
-        .nav-controls { display: flex; align-items: center; gap: 10px; }
-        
-        button, select { background-color: var(--btn-bg); color: var(--btn-txt); border: none; padding: 8px 12px; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: bold; outline: none; }
-        select { border: 1px solid var(--grid-bg); }
-        button.primary { background-color: var(--primary-bg); color: var(--primary-txt); width: 100%; padding: 15px; font-size: 16px; margin-top: 10px; }
-        
-        .legend { font-size: 12px; opacity: 0.8; margin-bottom: 10px; line-height: 1.4; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background-color: var(--grid-bg); border: 2px solid var(--grid-bg); border-radius: 8px; overflow: hidden; touch-action: pan-y; }
-        .day-header { background-color: var(--day-header-bg); text-align: center; padding: 8px 0; font-size: 13px; font-weight: bold; }
-        .cal-cell { background-color: var(--cell-bg); min-height: 70px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px; text-align: center; cursor: pointer; transition: background-color 0.3s; }
-        .cal-cell.empty { background-color: var(--cell-empty); cursor: default; }
-        .cell-duty { background-color: var(--duty-bg); color: var(--duty-txt); }
-        .cell-off { background-color: var(--off-bg); color: var(--off-txt); }
-        
-        .date-num { font-size: 15px; font-weight: bold; margin-bottom: 2px; }
-        .info-txt { font-size: 11px; margin: 1px 0; }
-        .reserve-txt { color: var(--text-reserve); font-size: 11px; }
-        .task-case { color: var(--text-case); font-size: 11px; font-weight: bold; margin-top: 2px; }
-        .task-note { color: var(--text-note); font-size: 11px; font-weight: bold; margin-top: 2px; }
-        
-        .edit-panel { background-color: var(--panel-bg); padding: 15px; border-radius: 8px; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .selected-date-title { font-size: 18px; color: var(--primary-bg); font-weight: bold; margin-bottom: 15px; }
-        
-        .input-group { margin-bottom: 10px; }
-        .input-group label { display: block; font-weight: bold; margin: 10px 0 5px; font-size: 14px; }
-        .input-group select, .input-group input[type="text"], .input-group textarea { 
-            width: 100%; box-sizing: border-box; background-color: var(--input-bg); color: var(--input-txt); 
-            border: 1px solid var(--input-border); border-radius: 6px; padding: 10px; font-family: inherit; font-size: 14px; 
-        }
-        .input-group textarea { resize: vertical; }
-        .label-case { color: var(--text-case); }
-        .label-note { color: var(--text-note); }
-        
-        #login-screen, #loading-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: var(--bg-main); z-index: 9999; display: flex;
-            flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;
-        }
-        #loading-screen { z-index: 10000; }
-        #login-screen input { 
-            width: 100%; max-width: 300px; padding: 15px; font-size: 16px; 
-            text-align: center; border-radius: 8px; border: 1px solid var(--grid-bg); margin-bottom: 15px;
-            background-color: var(--cell-bg); color: var(--text-main);
-        }
+  /* 下方彈出的面板 */
+  .backdrop { position: fixed; inset: 0; background: var(--shadow); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 40; }
+  .backdrop.show { opacity: 1; pointer-events: auto; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; margin: 0 auto; max-width: 680px; max-height: 90vh; max-height: 90dvh;
+    background: var(--surface); border-radius: 18px 18px 0 0; transform: translateY(105%); transition: transform .25s ease;
+    z-index: 41; display: flex; flex-direction: column; box-shadow: 0 -10px 30px var(--shadow); }
+  .sheet.show { transform: none; }
+  .sheet .grab { width: 40px; height: 5px; background: var(--border); border-radius: 3px; margin: 8px auto 0; flex: none; }
+  .sheet .body { overflow-y: auto; padding: 8px 16px 16px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+  .sheet .foot { flex: none; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border);
+    display: flex; gap: 8px; align-items: center; background: var(--surface); border-radius: 0; }
+  .sh-head { display: flex; align-items: flex-start; gap: 8px; }
+  .sh-title { font-size: 21px; font-weight: 800; }
+  .sh-sub, .sh-meta { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .x { margin-left: auto; background: var(--surface2); border: 0; color: var(--text); width: 36px; height: 36px; border-radius: 50%;
+    font-size: 18px; cursor: pointer; flex: none; }
+  .card { background: var(--surface2); border-radius: 12px; padding: 10px 12px; margin-top: 12px; font-size: 13.5px; line-height: 1.55; }
+  .card .res { color: var(--accent); font-weight: 700; }
+  details.swap summary { cursor: pointer; font-size: 13px; font-weight: 700; color: var(--muted); margin: 16px 0 6px; list-style: none; }
+  details.swap summary::-webkit-details-marker { display: none; }
+  details.swap summary::before { content: "▸ "; }
+  details.swap[open] summary::before { content: "▾ "; }
+  details.swap summary.adj { color: var(--manual-fg); }
+  .grid2 { display: grid; grid-template-columns: 76px 1fr; gap: 8px; align-items: center; font-size: 14px; }
+  .leave { display: flex; align-items: center; gap: 10px; background: var(--surface2); border-radius: 10px; padding: 8px 10px; margin-bottom: 6px; font-size: 15px; }
+  .leave b { font-weight: 800; }
+  .leave .t { color: var(--leave-fg); }
+  .leave button { margin-left: auto; border: 0; background: transparent; color: var(--muted); font-size: 17px; cursor: pointer; padding: 0 4px; }
+  .dirty { color: var(--accent); font-size: 12.5px; font-weight: 700; }
 
-        @keyframes pulseGlow {
-            0% { box-shadow: inset 0 0 0 2px var(--glow-1), inset 0 0 5px rgba(0,0,0,0.1); }
-            50% { box-shadow: inset 0 0 0 2px var(--glow-2), inset 0 0 15px var(--glow-2); }
-            100% { box-shadow: inset 0 0 0 2px var(--glow-1), inset 0 0 5px rgba(0,0,0,0.1); }
-        }
-        .today-glow { animation: pulseGlow 2s infinite ease-in-out; position: relative; z-index: 2; }
-    </style>
+  /* 多選列 */
+  .multibar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 30;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 6px 24px var(--shadow);
+    padding: 8px 8px 8px 14px; display: flex; gap: 8px; align-items: center; width: min(560px, calc(100% - 20px)); }
+  .multibar .n { font-weight: 800; flex: 1; font-size: 15px; }
+
+  /* 對話框 */
+  .modal-wrap { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; background: var(--shadow); }
+  .modal { background: var(--surface); border-radius: 16px; padding: 20px; width: min(440px, 100%); max-height: 88vh; overflow-y: auto;
+    box-shadow: 0 10px 40px var(--shadow); }
+  .modal h3 { margin: 0 0 6px; font-size: 19px; }
+  .modal .msg { font-size: 15px; line-height: 1.6; white-space: pre-line; }
+  .modal .btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; flex-wrap: wrap; }
+  .remind-box { background: var(--duty-bg); color: var(--duty-fg); border: 1px solid var(--duty-fg); border-radius: 12px; padding: 14px 16px; margin-top: 12px; }
+  .remind-box .big { font-size: 24px; font-weight: 800; }
+  .toast { position: fixed; left: 50%; bottom: calc(80px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--text); color: var(--bg);
+    padding: 9px 16px; border-radius: 999px; font-size: 14px; z-index: 70; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: 90%; text-align: center; }
+  .toast.show { opacity: .95; }
+
+  /* 登入 */
+  .center-screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; background: var(--bg); z-index: 80; }
+  .login { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 26px 22px; width: min(380px, 100%); }
+  .login h2 { margin: 0; font-size: 24px; }
+  .login .err { color: var(--off-fg); font-size: 13.5px; min-height: 18px; margin-top: 8px; white-space: pre-line; }
+</style>
 </head>
 <body>
 
-    <div id="loading-screen">
-        <h3 style="color:var(--primary-bg);">系統載入中...</h3>
+<div id="loading" class="center-screen"><div style="color:var(--accent);font-size:18px;font-weight:700">系統連線中…</div></div>
+
+<div id="login" class="center-screen hidden">
+  <div class="login">
+    <h2 id="login-title">偵二隊行事曆</h2>
+    <div class="hint" style="margin:4px 0 14px">第一次使用請登入，之後會自動連線</div>
+    <div class="sec" style="margin-top:0">帳號</div>
+    <input type="text" id="acc" autocapitalize="off" autocomplete="username" spellcheck="false" placeholder="帳號（不用打 @ntpd.gov.tw）">
+    <div class="sec">密碼</div>
+    <input type="password" id="pwd" autocomplete="current-password" placeholder="密碼">
+    <div class="err" id="login-err"></div>
+    <button class="btn primary block" id="login-btn" style="margin-top:12px;padding:13px">登入</button>
+    <button class="btn block hidden" id="offline-btn" style="margin-top:8px">離線開啟（唯讀）</button>
+  </div>
+</div>
+
+<div id="main" class="app hidden">
+  <div class="head">
+    <div>
+      <div class="title" id="month-title"></div>
+      <div class="roc" id="roc"></div>
+    </div>
+    <div class="nav">
+      <button class="btn ghost" id="prev" aria-label="上個月">◀</button>
+      <button class="btn ghost" id="today">今天</button>
+      <button class="btn ghost" id="next" aria-label="下個月">▶</button>
+    </div>
+  </div>
+  <div class="tools">
+    <button class="btn ghost" id="sync">🔄 同步</button>
+    <button class="btn ghost" id="multi-btn">☑ 多選</button>
+    <button class="btn ghost me" id="me-btn">👤 選擇身分</button>
+    <button class="btn ghost" id="settings-btn" style="margin-left:auto">⚙</button>
+  </div>
+  <div class="legend" id="legend"></div>
+  <div class="banner hidden" id="banner"></div>
+  <div class="cal" id="cal"></div>
+  <div class="status" id="status"></div>
+</div>
+
+<div class="backdrop" id="backdrop"></div>
+
+<!-- 單日編輯 -->
+<div class="sheet" id="day-sheet" aria-hidden="true">
+  <div class="grab"></div>
+  <div class="body">
+    <div class="sh-head">
+      <div style="min-width:0">
+        <div class="sh-title" id="d-title"></div>
+        <div class="sh-sub" id="d-sub"></div>
+        <div class="sh-meta" id="d-meta"></div>
+      </div>
+      <button class="x" data-close="day" aria-label="關閉">✕</button>
+    </div>
+    <div class="card"><div id="d-default"></div><div class="res" id="d-result"></div></div>
+
+    <div class="sec">本隊這天</div>
+    <div class="seg" id="d-status" data-ro></div>
+    <div class="chips" id="d-chips"><span class="hint">快速：</span></div>
+    <div class="sec">說明／標籤（例如：輪休、停休、專案勤務）</div>
+    <input type="text" id="d-reason" data-ro>
+
+    <details class="swap" id="d-swap">
+      <summary id="d-swap-sum">換班調整</summary>
+      <div class="grid2">
+        <span>值班隊</span><select id="d-duty" data-ro></select>
+        <span id="d-b-lbl">本隊班別</span><select id="d-b" data-ro></select>
+      </div>
+    </details>
+
+    <div class="sec" style="color:var(--leave-fg)" id="d-leave-title">👤 人員請假</div>
+    <div id="d-leaves"></div>
+    <div class="row">
+      <input type="text" class="grow" id="d-leave-name" list="roster-list" placeholder="姓名" data-ro>
+      <select id="d-leave-type" style="width:92px" data-ro></select>
+      <button class="btn" id="d-leave-add" data-ro>＋ 登記</button>
     </div>
 
-    <div id="login-screen" style="display: none;">
-        <h2 style="color:var(--primary-bg); margin-bottom: 5px;">🛡️ 偵二隊排班系統</h2>
-        <p style="opacity: 0.7; margin-bottom: 30px; font-size: 14px;">請輸入辦公室專屬帳號與密碼</p>
-        <input type="text" id="acc-input" placeholder="帳號 (例如: zhen2)" autocapitalize="off">
-        <input type="password" id="pwd-input" placeholder="密碼">
-        <button class="primary" style="max-width: 300px;" onclick="verifyLogin()">解鎖進入</button>
+    <div class="sec" style="color:var(--case-fg)">⭐ 執行案件（建議只填代號）</div>
+    <textarea id="d-case" rows="2" data-ro></textarea>
+    <div class="sec" style="color:var(--note-fg)">📌 一般記事</div>
+    <textarea id="d-note" rows="3" data-ro></textarea>
+  </div>
+  <div class="foot">
+    <div class="grow" style="flex:1;min-width:0"><span class="dirty" id="d-dirty"></span></div>
+    <button class="btn" id="d-reset" data-ro>↺ 還原預設</button>
+    <button class="btn primary" id="d-save" data-ro>💾 儲存</button>
+  </div>
+</div>
+
+<!-- 多選調整 -->
+<div class="sheet" id="batch-sheet" aria-hidden="true">
+  <div class="grab"></div>
+  <div class="body">
+    <div class="sh-head">
+      <div style="min-width:0"><div class="sh-title" id="b-title"></div><div class="sh-sub" id="b-sub"></div></div>
+      <button class="x" data-close="batch" aria-label="關閉">✕</button>
     </div>
-
-    <div id="app-content" style="display: none;">
-        <div class="nav-bar">
-            <div class="nav-title" id="month-label"></div>
-            <div class="nav-controls">
-                <button onclick="changeMonth(-1)">◀</button>
-                <button onclick="changeMonth(1)">▶</button>
-            </div>
-        </div>
-        
-        <!-- 🌟 新增：工具列加入主題選擇器 -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
-            <div style="display: flex; gap: 8px;">
-                <button onclick="loadTasks(true)">🔄 同步</button>
-                <select id="theme-selector" onchange="changeTheme()">
-                    <option value="default">🚓 經典暗黑</option>
-                    <option value="minimal">☕ 無印文青</option>
-                    <option value="nature">🏕️ 自然原木</option>
-                    <option value="ocean">🌊 休閒海洋</option>
-                    <option value="cyber">🚀 科技霓虹</option>
-                </select>
-            </div>
-            <label style="font-size: 14px; display: flex; align-items: center; gap: 5px;">
-                <input type="checkbox" id="show-chk" onchange="renderCalendar()"> 顯示其他外勤隊
-            </label>
-        </div>
-
-        <div class="legend">💡 [⭐案件] 重要勤務 │ [📌記事] 備註 │ (預備) 偵六隊值班</div>
-        
-        <div class="calendar-grid" id="calendar"></div>
-
-        <div class="edit-panel" id="edit-panel" style="display: none;">
-            <div class="selected-date-title" id="sel-date-lbl">請選擇日期</div>
-            
-            <div style="background-color: var(--cell-bg); padding: 10px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid var(--primary-bg);">
-                <div class="input-group">
-                    <label style="color:var(--text-reserve); margin-top:0;">🔄 手動調整：</label>
-                    <select id="override-duty">
-                        <option value="">(依照系統預設排班)</option>
-                        <option value="off">強制標示為「休假」</option>
-                        <option value="work">強制標示為「上班」</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label style="color:var(--text-main); opacity:0.8;">🏷️ 自訂假別或節日名稱：</label>
-                    <input type="text" id="custom-reason" placeholder="例如：輪休、專案補休、聚餐...">
-                </div>
-            </div>
-
-            <div class="input-group"><label class="label-case">⭐ 執行案件 (重要)：</label><textarea id="case-text" rows="3"></textarea></div>
-            <div class="input-group"><label class="label-note">📌 一般記事：</label><textarea id="note-text" rows="3"></textarea></div>
-            <button class="primary" onclick="saveTask()">💾 儲存</button>
-        </div>
+    <div class="sec">本隊這幾天</div>
+    <div class="seg" id="b-status" data-ro></div>
+    <div class="chips" id="b-chips"><span class="hint">快速：</span></div>
+    <div class="sec">說明／標籤（留空＝不變更）</div>
+    <input type="text" id="b-reason" data-ro>
+    <div class="sec">值班隊（換班）</div>
+    <select id="b-duty" data-ro></select>
+    <div class="row" style="margin-top:12px">
+      <button class="btn primary grow" id="b-apply" data-ro>套用</button>
+      <button class="btn" id="b-reset" data-ro>↺ 還原預設</button>
     </div>
+    <div class="sec" style="color:var(--leave-fg);margin-top:22px">👤 人員請假（登記到這幾天）</div>
+    <div class="row">
+      <input type="text" class="grow" id="b-leave-name" list="roster-list" placeholder="姓名" data-ro>
+      <select id="b-leave-type" style="width:92px" data-ro></select>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn grow" id="b-leave-add" data-ro>＋ 登記</button>
+      <button class="btn danger" id="b-leave-del" data-ro>－ 移除此人</button>
+    </div>
+    <div class="hint" style="margin-top:14px">案件與記事請點單一日期編輯。</div>
+  </div>
+</div>
 
-    <script>
-        const FIREBASE_URL = "https://calandar-2e41c-default-rtdb.asia-southeast1.firebasedatabase.app/tasks";
-        
-        // 🔑 記得將下方替換為您的 API_KEY
-        const API_KEY = "AIzaSyAJdTuKBRpj2So4QPyCllHc0ucva4qx5g8"; 
-        
-        let ID_TOKEN = ""; 
-        let REFRESH_TOKEN = localStorage.getItem("duty_app_refresh") || "";
+<!-- 設定 -->
+<div class="sheet" id="settings-sheet" aria-hidden="true">
+  <div class="grab"></div>
+  <div class="body">
+    <div class="sh-head"><div class="sh-title">設定</div><button class="x" data-close="settings" aria-label="關閉">✕</button></div>
+    <div class="sec">主題</div>
+    <select id="theme-sel"></select>
+    <label class="chk" style="margin-top:8px"><input type="checkbox" id="show-others"> 格子裡顯示其他隊</label>
+    <div class="sec">我的身分與值班提醒</div>
+    <button class="btn block" id="s-identity">👤 身分、小隊、提醒時間</button>
+    <button class="btn block" id="s-ics" style="margin-top:8px">📅 匯出值班提醒到手機行事曆</button>
+    <div class="hint" style="margin-top:6px">網頁版只有開著時才能跳提醒。匯出到手機行事曆後，就算沒開網頁，前一天也會準時提醒；換班或輪序變動後記得重新匯出。</div>
+    <div class="sec">輪值規則</div>
+    <div class="hint" id="s-rules"></div>
+    <div class="sec">帳號</div>
+    <button class="btn danger block" id="s-logout">登出這支手機</button>
+  </div>
+</div>
 
-        let currentDate = new Date();
-        let selectedDateStr = "";
-        let tasks = {};
+<datalist id="roster-list"></datalist>
+<div class="toast" id="toast"></div>
 
-        let touchStartX = 0; let touchEndX = 0; let touchStartY = 0; let touchEndY = 0;
+<script>
+"use strict";
+// ==========================================
+// 🔒 系統設定（與電腦版共用同一個資料庫）
+// ==========================================
+const FIREBASE_ROOT = "https://calandar-2e41c-default-rtdb.asia-southeast1.firebasedatabase.app";
+const TASKS_URL = FIREBASE_ROOT + "/tasks";
+const SETTINGS_URL = FIREBASE_ROOT + "/dutySettings";
+const API_KEY = "AIzaSyAJdTuKBRpj2So4QPyCllHc0ucva4qx5g8";   // Firebase Web API Key 本來就會出現在前端，不是機密
+const EMAIL_DOMAIN = "@ntpd.gov.tw";
+const HTTP_TIMEOUT = 12000, POLL_MS = 60000, REMIND_CHECK_MS = 30000, SETTINGS_POLL_EVERY = 3;
+const LS = { theme: "duty_app_theme", refresh: "duty_app_refresh", account: "duty_app_account", identity: "duty_identity",
+             tasks: "duty_cache_tasks", rules: "duty_cache_rules", others: "duty_show_others" };
 
-        window.onload = async function() {
-            // 初始化主題選單的顯示
-            document.getElementById('theme-selector').value = savedTheme;
-            
-            if (REFRESH_TOKEN) {
-                let success = await refreshIdToken();
-                if (success) {
-                    document.getElementById('loading-screen').style.display = 'none';
-                    document.getElementById('app-content').style.display = 'block';
-                    setupSwipeListeners(); 
-                    return;
-                }
-            }
-            document.getElementById('loading-screen').style.display = 'none';
-            document.getElementById('login-screen').style.display = 'flex';
-        };
+const THEME_NAMES = { default: "🚓 經典暗黑", minimal: "☕ 無印文青", nature: "🏕 自然原木", ocean: "🌊 休閒海洋", minecraft: "🧱 麥塊像素" };
+const WD = "日一二三四五六";
+const B_CYCLES = ["B1日/B2夜", "B2日/B1夜"];
+const TEAMS = ["B1", "B2"];
+const NO_TEAM_WORDS = new Set(["隊部", "幹部", "不分", "無", "隊長", "副隊長", "分隊長", "小隊長"]);
+const SQUAD_CHIPS = [["輪休", "休假"], ["補休", "休假"], ["停休", "上班"]];
+const LEAVE_TYPES = ["休假", "補休", "事假", "病假", "公假", "公差", "喪假", "婚假"];
+const STATUS_TO_OV = { "預設": "", "上班": "上班", "休假": "輪休" };
+const OV_TO_STATUS = { "": "預設", "上班": "上班", "輪休": "休假", "off": "休假", "work": "上班" };
+const OV_ALIASES = { off: "輪休", work: "上班" };   // 舊手機版存的是 off／work
+const ADJUST_KEYS = ["overrideDuty", "customReason", "dutySquad", "bCycle"];
+const FORM_KEYS = ["case", "note"].concat(ADJUST_KEYS);
+const META_KEYS = ["updatedBy", "updatedAt"];
+const FIELD_NAMES = { case: "執行案件", note: "記事", overrideDuty: "本隊狀態", customReason: "說明／標籤", dutySquad: "值班隊", bCycle: "班別" };
+const BAD_KEY = /[.$#\[\]\/]/;
 
-        // 🌟 新增：切換主題並記憶的功能
-        function changeTheme() {
-            let selected = document.getElementById('theme-selector').value;
-            document.documentElement.setAttribute('data-theme', selected);
-            localStorage.setItem('duty_app_theme', selected);
-        }
+const DEFAULT_RULES = {
+  my_squad: "偵二隊", reserve_squad: "偵六隊",
+  periods: [
+    { start: "2026-08-01", order: ["偵三隊", "偵四隊", "偵五隊", "偵六隊", "偵七隊", "偵八隊", "偵一隊", "偵二隊"], first_b: "B2日/B1夜" },
+    { start: "2026-09-01", order: ["偵二隊", "偵三隊", "偵四隊", "偵五隊", "偵六隊", "偵七隊", "偵八隊", "科偵隊", "偵一隊"], first_b: "B1日/B2夜" },
+  ],
+  holiday_off: true, weekend_off: true, comp_fri: true, comp_mon: true,
+  extra_holidays: "6-15 警察節", members: "",
+};
+const FIXED_HOLIDAYS = { "1-1": "元旦", "2-28": "和平紀念日", "4-4": "兒童節", "5-1": "勞動節",
+  "9-28": "教師節", "10-10": "國慶日", "10-25": "光復節", "12-25": "行憲紀念日" };
+const DYNAMIC_HOLIDAYS = {
+  "2026-02-15": "小年夜", "2026-02-16": "除夕", "2026-02-17": "初一", "2026-02-18": "初二", "2026-02-19": "初三",
+  "2026-02-20": "初四", "2026-02-21": "初五", "2026-03-02": "和平紀念日補假", "2026-04-03": "兒童節補假",
+  "2026-04-04": "清明節", "2026-04-06": "清明節補假", "2026-06-19": "端午節", "2026-09-25": "中秋節",
+  "2026-10-09": "國慶日補假", "2026-10-26": "光復節補假",
+  "2027-02-04": "小年夜", "2027-02-05": "除夕", "2027-02-06": "初一", "2027-02-07": "初二", "2027-02-08": "初三",
+  "2027-02-09": "春節補假", "2027-02-10": "春節補假", "2027-03-01": "和平紀念日補假", "2027-04-05": "清明節",
+  "2027-04-06": "兒童節補假", "2027-04-30": "勞動節補假", "2027-06-09": "端午節", "2027-09-15": "中秋節",
+  "2027-10-11": "國慶日補假", "2027-12-24": "行憲紀念日補假", "2027-12-31": "元旦補假",
+};
 
-        function setupSwipeListeners() {
-            const calendarEl = document.getElementById('calendar');
-            calendarEl.addEventListener('touchstart', e => {
-                touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY;
-            }, {passive: true});
-            calendarEl.addEventListener('touchend', e => {
-                touchEndX = e.changedTouches[0].screenX; touchEndY = e.changedTouches[0].screenY;
-                handleSwipeGesture();
-            }, {passive: true});
-        }
+// ==========================================
+// 🧰 小工具
+// ==========================================
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2, "0");
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const dayDiff = (a, b) => Math.round((Date.UTC(b.getFullYear(), b.getMonth(), b.getDate()) - Date.UTC(a.getFullYear(), a.getMonth(), a.getDate())) / 86400000);
+const parseYmd = s => {
+  const m = /^\s*(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})\s*$/.exec(s || "");
+  if (!m) return null;
+  const d = new Date(+m[1], +m[2] - 1, +m[3]);
+  return d.getMonth() === +m[2] - 1 && d.getDate() === +m[3] ? d : null;
+};
+const nowStr = () => { const d = new Date(); return `${ymd(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const hhmm = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const norm = v => (typeof v === "string" ? v.trim() : "");
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const clone = o => JSON.parse(JSON.stringify(o));
+const firstLine = s => { s = norm(s); return s ? s.split(/\r?\n/)[0].trim() : ""; };
+const fmtMD = d => `${d.getMonth() + 1}/${d.getDate()}（${WD[d.getDay()]}）`;
+const lsGet = (k, fallback) => { try { const v = localStorage.getItem(k); return v == null ? fallback : JSON.parse(v); } catch (e) { return fallback; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 
-        function handleSwipeGesture() {
-            const deltaX = touchEndX - touchStartX; const deltaY = touchEndY - touchStartY;
-            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40) {
-                if (deltaX < 0) changeMonth(1);
-                else if (deltaX > 0) changeMonth(-1);
-            }
-        }
+// ==========================================
+// 🚓 輪值與休假規則（雲端 /dutySettings，與電腦版共用）
+// ==========================================
+function normalizeTeam(s) {
+  s = String(s || "").trim().toUpperCase().replace(/Ｂ/g, "B").replace(/１/g, "1").replace(/２/g, "2");
+  return TEAMS.includes(s) ? s : "";
+}
+const teamLabel = t => (TEAMS.includes(t) ? `${t} 小隊` : "隊部");
+function parseMembers(raw) {
+  const out = [], seen = new Set();
+  for (const line of String(raw || "").split(/\r?\n/)) {
+    const tokens = line.trim().split(/[\s,，、]+/).filter(Boolean);
+    if (!tokens.length) continue;
+    let team = "";
+    const last = tokens[tokens.length - 1];
+    if (tokens.length > 1 && (normalizeTeam(last) || NO_TEAM_WORDS.has(last))) team = normalizeTeam(tokens.pop());
+    for (const n of tokens) if (!seen.has(n)) { seen.add(n); out.push([n, team]); }
+  }
+  return out;
+}
+const formatMembers = ms => ms.map(([n, t]) => `${n} ${t || "隊部"}`).join("\n");
+function parseExtraHolidays(text) {
+  const annual = {}, once = {};
+  for (const raw of String(text || "").split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith("#")) continue;
+    let m = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})\s+(.+)$/.exec(line);
+    if (m) { const d = parseYmd(`${m[1]}-${m[2]}-${m[3]}`); if (d) { once[ymd(d)] = m[4].trim(); continue; } }
+    m = /^(\d{1,2})[-/.](\d{1,2})\s+(.+)$/.exec(line);
+    if (m) annual[`${+m[1]}-${+m[2]}`] = m[3].trim();
+  }
+  return { annual, once };
+}
+function shiftOf(b, team) {
+  const m = /^(B\d)日\/(B\d)夜$/.exec(b || "");
+  if (!m || !TEAMS.includes(team)) return "";
+  return team === m[1] ? "日班" : team === m[2] ? "夜班" : "";
+}
+const listOf = v => (Array.isArray(v) ? v : v && typeof v === "object" ? Object.values(v) : []);
 
-        async function refreshIdToken() {
-            let refreshUrl = `https://securetoken.googleapis.com/v1/token?key=${API_KEY}`;
-            try {
-                let res = await fetch(refreshUrl, {
-                    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `grant_type=refresh_token&refresh_token=${REFRESH_TOKEN}`
-                });
-                let data = await res.json();
-                if (data.id_token) {
-                    ID_TOKEN = data.id_token; REFRESH_TOKEN = data.refresh_token;
-                    localStorage.setItem("duty_app_refresh", REFRESH_TOKEN);
-                    await loadTasks(false);
-                    return true;
-                }
-            } catch (e) {}
-            localStorage.removeItem("duty_app_refresh");
-            return false;
-        }
+class Rules {
+  constructor(data) {
+    const d = clone(DEFAULT_RULES);
+    if (data && typeof data === "object") for (const k of Object.keys(d)) if (data[k] !== undefined && data[k] !== null) d[k] = clone(data[k]);
+    this.data = d;
+    this.my = String(d.my_squad || "").trim() || DEFAULT_RULES.my_squad;
+    this.reserve = String(d.reserve_squad || "").trim();
+    let periods = Rules.parsePeriods(d.periods);
+    if (!periods.length) periods = Rules.parsePeriods(DEFAULT_RULES.periods);
+    this.periods = periods;
+    this.holidayOff = d.holiday_off !== false; this.weekendOff = d.weekend_off !== false;
+    this.compFri = d.comp_fri !== false; this.compMon = d.comp_mon !== false;
+    const ex = parseExtraHolidays(d.extra_holidays); this.extraAnnual = ex.annual; this.extraOnce = ex.once;
+    this.roster = parseMembers(d.members);
+    this.members = this.roster.map(r => r[0]);
+    this.memberTeam = new Map(this.roster);
+  }
+  static parsePeriods(raw) {
+    const out = [];
+    for (const p of listOf(raw)) {
+      if (!p) continue;
+      const start = parseYmd(String(p.start || ""));
+      const order = listOf(p.order).map(String).filter(s => s.trim());
+      if (start && order.length && new Set(order).size === order.length)
+        out.push({ start, order, firstB: B_CYCLES.includes(p.first_b) ? p.first_b : B_CYCLES[0] });
+    }
+    return out.sort((a, b) => a.start - b.start);
+  }
+  duty(dt) {
+    let p = null;
+    for (const x of this.periods) { if (x.start <= dt) p = x; else break; }
+    if (!p) return { squad: "未知", bCycle: "" };
+    const n = dayDiff(p.start, dt), L = p.order.length;
+    const squad = p.order[((n % L) + L) % L];
+    if (squad !== this.my) return { squad, bCycle: "" };
+    const k = Math.floor((n - p.order.indexOf(this.my)) / L);
+    const other = p.firstB === B_CYCLES[0] ? B_CYCLES[1] : B_CYCLES[0];
+    return { squad, bCycle: k % 2 === 0 ? p.firstB : other };
+  }
+  squads() {
+    const seen = [];
+    for (const p of this.periods.slice().reverse()) for (const s of p.order) if (!seen.includes(s)) seen.push(s);
+    return seen;
+  }
+  holidayName(dt) {
+    const k = ymd(dt), md = `${dt.getMonth() + 1}-${dt.getDate()}`;
+    if (this.extraOnce[k]) return this.extraOnce[k];
+    if (this.extraAnnual[md]) return this.extraAnnual[md];
+    return FIXED_HOLIDAYS[md] || DYNAMIC_HOLIDAYS[k] || "";
+  }
+}
 
-        async function verifyLogin() {
-            let acc = document.getElementById('acc-input').value.trim();
-            let pwd = document.getElementById('pwd-input').value;
-            if(!acc || !pwd) return alert("請輸入帳號與密碼！");
-            
-            let formattedEmail = acc.includes('@') ? acc : acc + "@ntpd.gov.tw";
-            let authUrl = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${API_KEY}`;
-            let btn = document.querySelector("#login-screen button");
-            btn.innerText = "驗證中...";
-            
-            try {
-                let res = await fetch(authUrl, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: formattedEmail, password: pwd, returnSecureToken: true })
-                });
-                let data = await res.json();
-                
-                if (data.idToken && data.refreshToken) {
-                    ID_TOKEN = data.idToken; REFRESH_TOKEN = data.refreshToken;
-                    localStorage.setItem("duty_app_refresh", REFRESH_TOKEN);
-                    document.getElementById('login-screen').style.display = 'none';
-                    document.getElementById('app-content').style.display = 'block';
-                    setupSwipeListeners(); 
-                    loadTasks(true); 
-                } else {
-                    btn.innerText = "解鎖進入";
-                    document.getElementById('pwd-input').value = "";
-                    alert("帳號或密碼錯誤，請重新輸入。");
-                }
-            } catch (e) {
-                btn.innerText = "解鎖進入"; alert("連線失敗，請檢查網路狀態。");
-            }
-        }
+// ==========================================
+// 📦 狀態
+// ==========================================
+const state = {
+  tasks: lsGet(LS.tasks, {}) || {},
+  rules: new Rules(lsGet(LS.rules, null)),
+  settingsMeta: {}, settingsOk: true,
+  online: false, mainVisible: false, busy: 0, pollCount: 0,
+  idToken: "", refreshToken: localStorage.getItem(LS.refresh) || "", tokenExpiry: 0,
+  month: (() => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), 1); })(),
+  selected: ymd(new Date()), multiMode: false, multi: new Set(), snapshot: null, openSheet: null,
+  identity: lsGet(LS.identity, {}) || {},
+  showOthers: lsGet(LS.others, false),
+};
+if (typeof state.tasks !== "object" || Array.isArray(state.tasks)) state.tasks = {};
 
-        const DYNAMIC_HOLIDAYS = {
-            "2026-02-16": "除夕", "2026-02-17": "初一", "2026-02-18": "初二", 
-            "2026-02-19": "初三", "2026-02-20": "初四", "2026-02-21": "初五", 
-            "2026-03-02": "和平紀念日補假", 
-            "2026-04-03": "兒童節補假", "2026-04-04": "清明節", "2026-04-06": "清明節補假", 
-            "2026-06-19": "端午節", "2026-09-25": "中秋節", "2026-10-09": "國慶日補假",
-            "2027-02-05": "除夕", "2027-02-06": "初一", "2027-02-07": "初二", 
-            "2027-02-08": "初三", "2027-02-09": "初四", "2027-02-10": "初五",
-            "2027-04-05": "清明節", "2027-06-09": "端午節", "2027-09-15": "中秋節",
-            "2028-01-25": "除夕", "2028-01-26": "初一", "2028-01-27": "初二", 
-            "2028-01-28": "初三", "2028-01-29": "初四", "2028-01-30": "初五",
-            "2028-04-04": "清明節", "2028-05-28": "端午節", "2028-10-03": "中秋節"
-        };
-        const FIXED_HOLIDAYS = { 
-            "1-1": "元旦", "2-28": "和平紀念日", "4-4": "兒童節", 
-            "5-1": "勞動節", "6-15": "警察節", "9-28": "教師節", "10-10": "國慶日" 
-        };
+// ==========================================
+// 🔐 連線
+// ==========================================
+class AuthError extends Error {}
+class DbError extends Error {}
+class NetError extends Error {}
+const AUTH_TEXT = {
+  INVALID_LOGIN_CREDENTIALS: "帳號或密碼錯誤", INVALID_PASSWORD: "帳號或密碼錯誤", EMAIL_NOT_FOUND: "帳號或密碼錯誤",
+  INVALID_EMAIL: "帳號格式不正確", USER_DISABLED: "此帳號已被停用", TOO_MANY_ATTEMPTS_TRY_LATER: "嘗試次數過多，請稍後再試",
+  TOKEN_EXPIRED: "登入已失效（可能有人變更了密碼），請用新密碼重新登入", INVALID_REFRESH_TOKEN: "登入已失效，請重新登入",
+  USER_NOT_FOUND: "登入已失效，請重新登入", INVALID_ID_TOKEN: "登入已失效，請重新登入",
+};
+async function http(url, opts = {}) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), HTTP_TIMEOUT);
+  try { return await fetch(url, Object.assign({ cache: "no-store" }, opts, { signal: ctrl.signal })); }
+  catch (e) { throw new NetError(e.name === "AbortError" ? "連線逾時，請檢查網路。" : "無法連線，請檢查網路。"); }
+  finally { clearTimeout(timer); }
+}
+async function authErrorText(res) {
+  try {
+    const j = await res.json();
+    const msg = (j.error && j.error.message) || "";
+    const code = msg.split(" ")[0].split(":")[0].trim();
+    return AUTH_TEXT[code] || `登入失敗（${msg || res.status}）`;
+  } catch (e) { return `登入失敗（${res.status}）`; }
+}
+function setTokens(id, refresh, expiresIn) {
+  state.idToken = id;
+  state.tokenExpiry = Date.now() + (parseInt(expiresIn || "3600", 10) - 300) * 1000;
+  if (refresh) { state.refreshToken = refresh; try { localStorage.setItem(LS.refresh, refresh); } catch (e) {} }
+}
+async function signIn(email, password) {
+  const res = await http(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${API_KEY}`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password, returnSecureToken: true }) });
+  if (!res.ok) { if (res.status >= 500) throw new NetError(`伺服器錯誤（${res.status}）`); throw new AuthError(await authErrorText(res)); }
+  const d = await res.json();
+  setTokens(d.idToken, d.refreshToken, d.expiresIn);
+}
+async function refreshId() {
+  if (!state.refreshToken) throw new AuthError("請先登入");
+  const res = await http(`https://securetoken.googleapis.com/v1/token?key=${API_KEY}`, {
+    method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `grant_type=refresh_token&refresh_token=${encodeURIComponent(state.refreshToken)}` });
+  if ([400, 401, 403].includes(res.status)) throw new AuthError(await authErrorText(res));
+  if (!res.ok) throw new NetError(`伺服器錯誤（${res.status}）`);
+  const d = await res.json();
+  setTokens(d.id_token, d.refresh_token, d.expires_in);
+}
+/** 所有資料庫請求都走這裡：token 過期自動續期、檢查回應。 */
+async function fb(method, path = "", root = TASKS_URL, body) {
+  if (!state.idToken || Date.now() >= state.tokenExpiry) await refreshId();
+  for (const canRetry of [true, false]) {
+    const opts = { method };
+    if (body !== undefined) { opts.headers = { "Content-Type": "application/json" }; opts.body = JSON.stringify(body); }
+    const res = await http(`${root}${path}.json?auth=${encodeURIComponent(state.idToken)}`, opts);
+    if (res.status === 401 && canRetry) { await refreshId(); continue; }
+    if (res.status === 401 || res.status === 403) {
+      let detail = ""; try { detail = (await res.json()).error || ""; } catch (e) {}
+      throw new DbError(`資料庫拒絕存取（${detail}）。請檢查 Firebase 的資料庫 Rules。`);
+    }
+    if (!res.ok) throw new NetError(`伺服器錯誤（${res.status}）`);
+    const txt = await res.text();
+    return txt ? JSON.parse(txt) : null;
+  }
+}
 
-        function getHolidayName(dt) {
-            let md = (dt.getMonth() + 1) + "-" + dt.getDate();
-            if (FIXED_HOLIDAYS[md]) return FIXED_HOLIDAYS[md];
-            let ymd = dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, '0') + "-" + String(dt.getDate()).padStart(2, '0');
-            if (DYNAMIC_HOLIDAYS[ymd]) return DYNAMIC_HOLIDAYS[ymd];
-            return "";
-        }
+// ==========================================
+// 📅 一天的判斷（規則＋手動調整）
+// ==========================================
+function task(d) {
+  let t = state.tasks[d];
+  if (typeof t === "string") t = { case: t };
+  return t && typeof t === "object" ? t : {};
+}
+function leavesOf(t) {
+  const lv = t && t.leaves, o = {};
+  if (lv && typeof lv === "object") for (const [k, v] of Object.entries(lv)) o[k] = String(v || "");
+  return o;
+}
+const effSquad = dt => norm(task(ymd(dt)).dutySquad) || state.rules.duty(dt).squad;
+function autoOff(dt, squad) {
+  const r = state.rules;
+  if (squad === r.my) return [false, ""];
+  const hol = r.holidayName(dt);
+  if (hol && r.holidayOff) return [true, hol];
+  const wd = dt.getDay();
+  if ((wd === 0 || wd === 6) && r.weekendOff) return [true, "休假"];
+  if (wd === 5 && r.compFri && effSquad(addDays(dt, 2)) === r.my) return [true, "補休"];
+  if (wd === 1 && r.compMon && effSquad(addDays(dt, -2)) === r.my) return [true, "補休"];
+  return [false, ""];
+}
+function dayInfo(dt, t) {
+  const r = state.rules;
+  if (!t) t = task(ymd(dt));
+  const base = r.duty(dt);
+  const sqOv = norm(t.dutySquad), bOv = norm(t.bCycle);
+  const squad = sqOv || base.squad;
+  let b = "";
+  if (squad === r.my) b = bOv || (base.squad === r.my ? base.bCycle : "");
+  const [aOff, aReason] = autoOff(dt, squad);
+  let ov = t.overrideDuty || ""; ov = OV_ALIASES[ov] || ov;
+  const custom = norm(t.customReason);
+  const isOff = ov === "輪休" ? true : ov === "上班" ? false : aOff;
+  const reason = isOff ? (custom || (aOff ? aReason : "") || "輪休") : "";
+  const role = squad === r.my ? (isOff ? "duty_off" : "duty") : squad === r.reserve ? "reserve" : "other";
+  return { squad, bCycle: b, isOff, reason, label: isOff ? "" : custom, holiday: r.holidayName(dt), task: t,
+           role, manual: !!(ov || sqOv || bOv), leaves: leavesOf(t) };
+}
+function describe(info) {
+  const my = state.rules.my;
+  const duty = info.squad === my ? `${my}值班 ${info.bCycle}`.trim() : info.squad === "未知" ? "輪值未設定" : `${info.squad}值班`;
+  let us = info.isOff ? `本隊休假（${info.reason}）` : info.squad === my ? "本隊值班" : info.role === "reserve" ? "本隊上班・預備" : "本隊上班";
+  if (info.label) us += `・${info.label}`;
+  if (info.role === "duty" && state.identity.name) { const s = shiftOf(info.bCycle, state.identity.team); if (s) us += `｜你：${s}`; }
+  return `${duty}｜${us}`;
+}
+function cellLines(info, inMonth, wide) {
+  const L = [];
+  // 手機直式格子很窄：班別去掉斜線、節日改成獨立一行、多人請假只顯示人數
+  if (info.role === "duty") L.push([wide ? `值班 ${info.bCycle}`.trim() : (info.bCycle.replace("/", "") || "值班"), "duty-fg", true, !wide]);
+  else if (info.role === "duty_off") L.push([wide ? "本隊值班日" : "值班日", "muted", false]);
+  else if (info.role === "reserve") L.push(["預備", "reserve-fg", true]);
+  if (!inMonth) return L.map(x => [x[0], "muted", false, x[3]]);
+  if (!wide && info.holiday) L.push([info.holiday, "holiday-fg", false, true]);
+  if (info.isOff) { if (info.reason && info.reason !== "休假" && info.reason !== info.holiday) L.push([info.reason, "off-fg", false]); }
+  else if (info.label) L.push([info.label, "text", false]);
+  const lv = Object.entries(info.leaves).sort((a, b) => a[0].localeCompare(b[0], "zh-Hant"));
+  if (lv.length) L.push(["👤" + (wide ? lv.map(([n, v]) => (v ? `${n}(${v[0]})` : n)).join("、") : lv.length > 1 ? `${lv.length}人` : lv[0][0]), "leave-fg", false]);
+  const c = firstLine(info.task.case), n = firstLine(info.task.note);
+  if (c) L.push(["⭐" + c, "case-fg", false]);
+  if (n) L.push(["📌" + n, "note-fg", false]);
+  if (state.showOthers && info.squad !== state.rules.my && info.squad !== "未知") L.push([info.squad, "muted", false]);
+  return L;
+}
 
-        function getDailyDuty(targetDate) {
-            let baseDate = new Date(2026, 7, 1); 
-            let checkDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
-            if (checkDate < baseDate) return { squad: "未知", bCycle: "" };
+// ==========================================
+// 🖥️ 畫面
+// ==========================================
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("show"), 2600);
+}
+function setStatus(msg) { $("#status").textContent = msg; }
+function setBanner(msg) { const b = $("#banner"); b.textContent = msg || ""; b.classList.toggle("hidden", !msg); }
 
-            let squadsAug = ['偵二隊', '偵三隊', '偵四隊', '偵五隊', '偵六隊', '偵七隊', '偵八隊', '偵一隊'];
-            let squadsSept = ['偵二隊', '偵三隊', '偵四隊', '偵五隊', '偵六隊', '偵七隊', '偵八隊', '科偵隊', '偵一隊'];
+/** 通用對話框：buttons = [[key, 文字, "primary"|"danger"|""], ...]，回傳按下的 key。 */
+function ask(title, msg, buttons, extraHtml) {
+  return new Promise(resolve => {
+    const wrap = document.createElement("div");
+    wrap.className = "modal-wrap";
+    wrap.innerHTML = `<div class="modal" role="dialog"><h3>${esc(title)}</h3><div class="msg">${esc(msg)}</div>${extraHtml || ""}<div class="btns"></div></div>`;
+    const box = wrap.querySelector(".btns");
+    for (const [key, text, kind] of buttons) {
+      const b = document.createElement("button");
+      b.className = "btn" + (kind ? " " + kind : "");
+      b.textContent = text;
+      b.onclick = () => { wrap.remove(); resolve(key); };
+      box.appendChild(b);
+    }
+    document.body.appendChild(wrap);
+  });
+}
+const alertBox = (title, msg) => ask(title, msg, [["ok", "知道了", "primary"]]);
+const confirmBox = async (title, msg, yes = "確定", danger = false) =>
+  (await ask(title, msg, [["no", "取消", ""], ["yes", yes, danger ? "danger" : "primary"]])) === "yes";
 
-            let curr = new Date(baseDate); let squad = '偵三隊'; let zCount = 0;
+function renderLegend() {
+  const r = state.rules;
+  $("#legend").innerHTML =
+    `<span><i class="sw" style="background:var(--duty-bg);border-color:var(--duty-fg)"></i>${esc(r.my)}值班</span>` +
+    `<span><i class="sw" style="background:var(--off-bg);border-color:var(--off-fg)"></i>本隊休假</span>` +
+    `<span><i class="sw" style="background:var(--accent);border-color:var(--accent)"></i>今天</span>` +
+    `<span><b style="color:var(--reserve-fg)">預備</b>＝${esc(r.reserve)}值班</span>` +
+    `<span style="color:var(--leave-fg)">👤<span style="color:var(--muted)">人員請假</span></span>` +
+    `<span><b style="color:var(--manual-fg)">✎</b>手動調整過</span>`;
+  $("#login-title").textContent = `${r.my}行事曆`;
+  document.title = `${r.my}行事曆`;
+}
+function selectedSet() { return state.multiMode ? state.multi : new Set([state.selected]); }
 
-            while (curr < checkDate) {
-                if (squad === '偵二隊') zCount++;
-                curr.setDate(curr.getDate() + 1);
-                let seq = (curr.getFullYear() > 2026 || (curr.getFullYear() === 2026 && curr.getMonth() >= 8)) ? squadsSept : squadsAug;
-                let idx = seq.indexOf(squad);
-                squad = idx !== -1 ? seq[(idx + 1) % seq.length] : seq[0];
-            }
+function renderCalendar() {
+  const y = state.month.getFullYear(), m = state.month.getMonth();
+  $("#month-title").textContent = `${y} 年 ${m + 1} 月`;
+  $("#roc").textContent = `民國 ${y - 1911} 年`;
+  const first = new Date(y, m, 1), lead = first.getDay(), ndays = new Date(y, m + 1, 0).getDate();
+  const weeks = Math.ceil((lead + ndays) / 7), start = addDays(first, -lead);
+  const today = ymd(new Date()), sel = selectedSet();
+  const wide = window.innerWidth >= 600, maxLines = wide ? 4 : 3;
+  let html = WD.split("").map((d, i) => `<div class="wd${i === 0 || i === 6 ? " we" : ""}">${d}</div>`).join("");
+  for (let i = 0; i < weeks * 7; i++) {
+    const dt = addDays(start, i), d = ymd(dt), inMonth = dt.getMonth() === m, info = dayInfo(dt);
+    let cls = "cell";
+    if (!inMonth) cls += " other"; else if (info.isOff) cls += " off"; else if (info.role === "duty") cls += " duty";
+    if (sel.has(d)) cls += state.multiMode ? " sel msel" : " sel";
+    let lines = cellLines(info, inMonth, wide);
+    if (lines.length > maxLines) {
+      const more = lines.length - maxLines + 1;
+      lines = lines.slice(0, maxLines - 1).concat([[wide ? `…還有 ${more} 項` : `＋${more}`, "muted", false]]);
+    }
+    let rt = "";
+    const hol = wide && inMonth && info.holiday;
+    if (inMonth && (info.manual || hol))
+      rt = `<span class="rt">${hol ? `<span class="hol">${esc(info.holiday)}</span>` : ""}${info.manual ? '<span class="mk">✎</span>' : ""}</span>`;
+    html += `<div class="${cls}" data-d="${d}"><div class="top"><span class="num${d === today ? " today" : ""}">${dt.getDate()}</span>${rt}</div>` +
+      lines.map(([t, c, b, tight]) => `<div class="ln${b ? " b" : ""}${tight ? " tight" : ""}" style="color:var(--${c})">${esc(t)}</div>`).join("") + `</div>`;
+  }
+  $("#cal").innerHTML = html;
+}
+function renderTools() {
+  const id = state.identity;
+  $("#me-btn").textContent = id.name ? `👤 ${id.name}・${id.team || "隊部"}` : "👤 選擇身分";
+  $("#multi-btn").classList.toggle("on", state.multiMode);
+  $("#multi-btn").textContent = state.multiMode ? "☑ 多選中" : "☑ 多選";
+  const names = leaveNames();
+  $("#roster-list").innerHTML = names.map(n => `<option value="${esc(n)}"></option>`).join("");
+}
+function renderAll() {
+  renderLegend(); renderTools(); renderCalendar(); renderMultibar();
+  if (state.openSheet === "day") refreshDaySheet(true);
+  if (state.openSheet === "batch") refreshBatchSheet();
+}
+function leaveNames() {
+  const names = state.rules.members.slice(), me = state.identity.name;
+  return me ? [me].concat(names.filter(n => n !== me)) : names;
+}
+function applyOnlineState() {
+  document.querySelectorAll("[data-ro]").forEach(el => {
+    if (el.classList.contains("seg")) el.classList.toggle("off", !state.online);
+    else el.disabled = !state.online;
+  });
+  $("#d-save").textContent = state.online ? "💾 儲存" : "離線：無法儲存";
+}
 
-            if (squad === '偵二隊') return { squad: squad, bCycle: (zCount % 2 === 0) ? "B1日/B2夜" : "B2日/B1夜" };
-            return { squad: squad, bCycle: "" };
-        }
+// ==========================================
+// 📲 面板開關
+// ==========================================
+function openSheet(name) {
+  for (const s of ["day", "batch", "settings"]) {
+    $(`#${s}-sheet`).classList.toggle("show", s === name);
+    $(`#${s}-sheet`).setAttribute("aria-hidden", s === name ? "false" : "true");
+  }
+  $("#backdrop").classList.toggle("show", !!name);
+  document.body.classList.toggle("lock", !!name);
+  state.openSheet = name || null;
+}
+async function closeSheet() {
+  if (state.openSheet === "day" && !(await confirmDiscard())) return;
+  openSheet(null);
+  renderCalendar();
+}
 
-        function isUserOff(targetDate) {
-            let duty = getDailyDuty(targetDate);
-            let wd = targetDate.getDay(); 
-            if (duty.squad === '偵二隊') return { off: false, reason: "" };
-            
-            let hol = getHolidayName(targetDate);
-            if (hol) return { off: true, reason: hol };
+// ==========================================
+// ✏️ 單日編輯
+// ==========================================
+function buildStaticControls() {
+  const seg = (el, opts) => { el.innerHTML = opts.map(o => `<button type="button" data-v="${o}">${o}</button>`).join(""); };
+  seg($("#d-status"), ["預設", "上班", "休假"]);
+  seg($("#b-status"), ["不變更", "預設", "上班", "休假"]);
+  for (const [box, fn] of [[$("#d-chips"), onChip], [$("#b-chips"), onBatchChip]]) {
+    for (const [reason, st] of SQUAD_CHIPS) {
+      const c = document.createElement("button"); c.type = "button"; c.className = "chip"; c.textContent = reason;
+      c.setAttribute("data-ro", ""); c.onclick = () => state.online && fn(reason, st);
+      box.appendChild(c);
+    }
+  }
+  const types = LEAVE_TYPES.map(t => `<option>${t}</option>`).join("");
+  $("#d-leave-type").innerHTML = types; $("#d-leave-type").value = "事假";
+  $("#b-leave-type").innerHTML = types; $("#b-leave-type").value = "休假";
+  $("#theme-sel").innerHTML = Object.entries(THEME_NAMES).map(([k, v]) => `<option value="${k}">${v}</option>`).join("");
+}
+function segGet(el) { const b = el.querySelector("button.on"); return b ? b.dataset.v : ""; }
+function segSet(el, v) { el.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.v === v)); }
 
-            if (wd === 0 || wd === 6) return { off: true, reason: "休假" };
-            let checkOffset = (offset) => {
-                let d = new Date(targetDate); d.setDate(d.getDate() + offset);
-                return getDailyDuty(d).squad === '偵二隊';
-            }
-            if (wd === 5 && checkOffset(2)) return { off: true, reason: "補休" };
-            if (wd === 1 && checkOffset(-2)) return { off: true, reason: "補休" };
-            
-            return { off: false, reason: "" };
-        }
+function bAutoLabel(base) { return base.squad === state.rules.my ? `預設（${base.bCycle}）` : "預設（未定）"; }
+function fillDutySelects(d, dutyValue, bValue) {
+  const base = state.rules.duty(parseYmd(d));
+  const squads = state.rules.squads();
+  if (dutyValue && !squads.includes(dutyValue)) squads.push(dutyValue);
+  $("#d-duty").innerHTML = `<option value="">預設（${esc(base.squad)}）</option>` + squads.map(s => `<option>${esc(s)}</option>`).join("");
+  $("#d-duty").value = dutyValue || "";
+  $("#d-b").innerHTML = `<option value="">${esc(bAutoLabel(base))}</option>` + B_CYCLES.map(b => `<option>${b}</option>`).join("");
+  $("#d-b").value = B_CYCLES.includes(bValue) ? bValue : "";
+}
+function readFields() {
+  const d = state.selected, base = state.rules.duty(parseYmd(d));
+  const ds = $("#d-duty").value || "";
+  let b = $("#d-b").value || "";
+  if ((ds || base.squad) !== state.rules.my) b = "";
+  return { case: $("#d-case").value.trim(), note: $("#d-note").value.trim(),
+           overrideDuty: STATUS_TO_OV[segGet($("#d-status"))] || "", customReason: $("#d-reason").value.trim(),
+           dutySquad: ds, bCycle: b };
+}
+function writeFields(vals, d) {
+  $("#d-case").value = norm(vals.case); $("#d-note").value = norm(vals.note); $("#d-reason").value = norm(vals.customReason);
+  segSet($("#d-status"), OV_TO_STATUS[vals.overrideDuty || ""] || "預設");
+  fillDutySelects(d, norm(vals.dutySquad), norm(vals.bCycle));
+  $("#d-swap").open = !!(norm(vals.dutySquad) || norm(vals.bCycle));
+}
+function loadFields(d) { writeFields(task(d), d); state.snapshot = readFields(); refreshDaySheet(true); }
+const isDirty = () => state.openSheet === "day" && state.snapshot && JSON.stringify(readFields()) !== JSON.stringify(state.snapshot);
 
-        async function loadTasks(showAlert = false) {
-            try {
-                let res = await fetch(`${FIREBASE_URL}.json?auth=${ID_TOKEN}`);
-                if (!res.ok) throw new Error("Token Invalid");
-                let data = await res.json();
-                tasks = data || {};
-                renderCalendar();
-                
-                if(selectedDateStr) {
-                    selectDate(selectedDateStr, ...lastSelectedInfo);
-                } else {
-                    let realToday = new Date();
-                    let todayStr = realToday.getFullYear() + "-" + String(realToday.getMonth() + 1).padStart(2, '0') + "-" + String(realToday.getDate()).padStart(2, '0');
-                    let duty = getDailyDuty(realToday);
-                    let offInfo = isUserOff(realToday);
-                    selectDate(todayStr, duty.squad, duty.bCycle, offInfo.off, offInfo.reason);
-                }
-                return true;
-            } catch (e) {
-                if (showAlert) alert("讀取資料失敗，請確認網路連線。");
-                return false;
-            }
-        }
+function refreshDaySheet(full) {
+  const d = state.selected, dt = parseYmd(d), f = readFields(), base = state.rules.duty(dt);
+  const showB = (f.dutySquad || base.squad) === state.rules.my;
+  $("#d-b").style.display = showB ? "" : "none"; $("#d-b-lbl").style.display = showB ? "" : "none";
+  const swapped = !!(f.dutySquad || f.bCycle);
+  $("#d-swap-sum").textContent = "換班調整" + (swapped ? "（已調整）" : "");
+  $("#d-swap-sum").classList.toggle("adj", swapped);
+  const hol = state.rules.holidayName(dt), t = task(d);
+  $("#d-title").textContent = `${dt.getMonth() + 1}月${dt.getDate()}日　星期${WD[dt.getDay()]}`;
+  $("#d-sub").textContent = `${dt.getFullYear()} 年（民國 ${dt.getFullYear() - 1911} 年）` + (hol ? `・${hol}` : "") + (d === ymd(new Date()) ? "・今天" : "");
+  $("#d-meta").textContent = norm(t.updatedAt) ? `最後修改：${norm(t.updatedBy) || "（未具名）"}・${norm(t.updatedAt)}` : "";
+  $("#d-default").textContent = "預設　" + describe(dayInfo(dt, {}));
+  $("#d-result").textContent = ADJUST_KEYS.some(k => f[k]) ? "調整後　" + describe(dayInfo(dt, f)) : "沒有手動調整，依預設";
+  $("#d-dirty").textContent = isDirty() ? "● 有修改尚未儲存" : "";
+  if (full) renderLeaves();
+}
+function renderLeaves() {
+  const lv = Object.entries(leavesOf(task(state.selected))).sort((a, b) => a[0].localeCompare(b[0], "zh-Hant"));
+  $("#d-leave-title").textContent = lv.length ? `👤 人員請假（${lv.length} 人）` : "👤 人員請假";
+  $("#d-leaves").innerHTML = lv.length
+    ? lv.map(([n, t]) => `<div class="leave"><b>${esc(n)}</b><span class="t">${esc(t || "請假")}</span><button type="button" data-rm="${esc(n)}" data-ro aria-label="移除">✕</button></div>`).join("")
+    : `<div class="hint" style="margin-bottom:8px">（無）</div>`;
+  $("#d-leaves").querySelectorAll("[data-rm]").forEach(b => {
+    b.disabled = !state.online;
+    b.onclick = () => removeLeave([state.selected], b.dataset.rm);
+  });
+}
+async function openDay(d) {
+  if (state.openSheet === "day" && d !== state.selected && !(await confirmDiscard())) return;
+  state.selected = d;
+  const dt = parseYmd(d);
+  if (dt.getMonth() !== state.month.getMonth() || dt.getFullYear() !== state.month.getFullYear()) state.month = new Date(dt.getFullYear(), dt.getMonth(), 1);
+  renderCalendar();
+  loadFields(d);
+  openSheet("day");
+  applyOnlineState();
+  $("#day-sheet .body").scrollTop = 0;
+}
+function onChip(reason, st) { segSet($("#d-status"), st); $("#d-reason").value = reason; refreshDaySheet(false); }
+async function confirmDiscard() {
+  if (!isDirty()) return true;
+  const ans = await ask("尚未儲存", `${state.selected} 的內容已修改但還沒儲存。`,
+    [["cancel", "取消", ""], ["discard", "不要了", "danger"], ["save", "儲存", "primary"]]);
+  if (ans === "cancel") return false;
+  if (ans === "save") return await saveDay();
+  loadFields(state.selected);
+  return true;
+}
+function resetFields() {
+  segSet($("#d-status"), "預設"); $("#d-reason").value = ""; $("#d-duty").value = ""; $("#d-b").value = "";
+  refreshDaySheet(false);
+}
 
-        async function saveTask() {
-            if (!selectedDateStr) return alert("請先選擇日期");
-            let cTxt = document.getElementById('case-text').value.trim();
-            let nTxt = document.getElementById('note-text').value.trim();
-            let oDuty = document.getElementById('override-duty').value;
-            let cReason = document.getElementById('custom-reason').value.trim();
-            let tUrl = `${FIREBASE_URL}/${selectedDateStr}.json?auth=${ID_TOKEN}`;
-            
-            try {
-                let res;
-                if (cTxt || nTxt || oDuty || cReason) {
-                    let payload = { case: cTxt, note: nTxt, overrideDuty: oDuty, customReason: cReason };
-                    tasks[selectedDateStr] = payload;
-                    res = await fetch(tUrl, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-                } else {
-                    delete tasks[selectedDateStr];
-                    res = await fetch(tUrl, { method: 'DELETE' });
-                }
-                if (!res.ok) throw new Error("Token Invalid");
-                renderCalendar();
-                alert("☁️ 已同步至雲端！");
-            } catch (e) {
-                alert("儲存失敗，系統可能需要重新驗證身分，請重新整理頁面。");
-            }
-        }
+function handleError(e, title) {
+  if (e instanceof AuthError) { authLost(e.message); return; }
+  alertBox(title, e.message + (title.includes("失敗") ? "\n\n內容仍保留在畫面上，尚未儲存。" : ""));
+}
 
-        function changeMonth(offset) {
-            currentDate.setMonth(currentDate.getMonth() + offset);
-            renderCalendar();
-        }
+/** 只送出有改的欄位；同事剛好也改了同一欄時先詢問。 */
+async function saveDay() {
+  if (!state.online) { alertBox("離線模式", "目前離線，無法儲存。網路恢復後會自動重連，也可以按「🔄 同步」。"); return false; }
+  const d = state.selected, vals = readFields(), orig = state.snapshot || {};
+  const changed = {};
+  for (const k of FORM_KEYS) if (vals[k] !== (orig[k] || "")) changed[k] = vals[k];
+  if (!Object.keys(changed).length) { toast("沒有需要儲存的修改"); return true; }
+  state.busy++;
+  let server = {};
+  try {
+    server = (await fb("GET", `/${d}`)) || {};
+    if (typeof server !== "object") server = {};
+    const conflicts = Object.keys(changed).filter(k => { const s = norm(server[k]); return s !== (orig[k] || "") && s !== vals[k]; });
+    if (conflicts.length) {
+      const who = norm(server.updatedBy) || "同事", when = norm(server.updatedAt);
+      const ans = await ask("同事剛改過這天",
+        `${who}${when ? "（" + when + "）" : ""} 也修改了 ${d} 的「${conflicts.map(k => FIELD_NAMES[k]).join("、")}」。`,
+        [["cancel", "先不要存", ""], ["theirs", "改看最新內容", ""], ["mine", "用我的覆蓋", "primary"]]);
+      if (ans === "cancel") return false;
+      if (ans === "theirs") { state.tasks[d] = server; loadFields(d); renderCalendar(); return false; }
+    }
+    const meta = { updatedBy: state.identity.name || "未具名", updatedAt: nowStr() };
+    const body = {};
+    for (const [k, v] of Object.entries(changed)) body[`${d}/${k}`] = v || null;
+    for (const [k, v] of Object.entries(meta)) body[`${d}/${k}`] = v;
+    await fb("PATCH", "", TASKS_URL, body);
+    state.tasks[d] = server;
+    applyLocal(d, Object.assign({}, changed, meta));
+  } catch (e) { handleError(e, "儲存失敗"); return false; }
+  finally { state.busy--; }
+  saveCache();
+  loadFields(d);
+  renderCalendar();
+  toast(`✔ ${fmtMD(parseYmd(d))} 已儲存`);
+  setStatus(`✔ 已儲存（${hhmm()}）`);
+  return true;
+}
+function applyLocal(d, changes) {
+  const t = clone(task(d));
+  for (const [key, v] of Object.entries(changes)) {
+    const parts = key.split("/");
+    let node = t;
+    for (const p of parts.slice(0, -1)) { if (!node[p] || typeof node[p] !== "object") node[p] = {}; node = node[p]; }
+    if (v === null || v === "") delete node[parts[parts.length - 1]]; else node[parts[parts.length - 1]] = v;
+  }
+  if (t.leaves && !Object.keys(t.leaves).length) delete t.leaves;
+  const hasContent = Object.entries(t).some(([k, v]) => !META_KEYS.includes(k) && ((typeof v === "string" && v.trim()) || (v && typeof v === "object" && Object.keys(v).length)));
+  if (hasContent) state.tasks[d] = t; else delete state.tasks[d];
+}
+/** 一次修改多天的部分欄位（null＝清除），不會蓋掉同事的其他資料。 */
+async function applyPatch(dates, changes, doneMsg) {
+  if (!dates.length) return false;
+  if (!state.online) { alertBox("離線模式", "目前離線，無法修改。"); return false; }
+  const touchesForm = Object.keys(changes).some(k => FORM_KEYS.includes(k.split("/")[0]));
+  if (touchesForm && state.openSheet === "day" && dates.includes(state.selected) && !(await confirmDiscard())) return false;
+  const meta = { updatedBy: state.identity.name || "未具名", updatedAt: nowStr() }, body = {};
+  for (const d of dates) {
+    for (const [k, v] of Object.entries(changes)) body[`${d}/${k}`] = v === "" ? null : v;
+    for (const [k, v] of Object.entries(meta)) body[`${d}/${k}`] = v;
+  }
+  state.busy++;
+  try { await fb("PATCH", "", TASKS_URL, body); }
+  catch (e) { handleError(e, "修改失敗"); return false; }
+  finally { state.busy--; }
+  for (const d of dates) applyLocal(d, Object.assign({}, changes, meta));
+  saveCache();
+  if (state.openSheet === "day" && dates.includes(state.selected)) { if (touchesForm) loadFields(state.selected); else refreshDaySheet(true); }
+  renderCalendar();
+  if (state.openSheet === "batch") refreshBatchSheet();
+  toast(`✔ ${doneMsg}` + (dates.length > 1 ? `（${dates.length} 天）` : ""));
+  setStatus(`✔ ${doneMsg}（${hhmm()}）`);
+  return true;
+}
+async function addLeave(dates, name, type) {
+  name = (name || "").trim(); type = (type || "").trim() || "請假";
+  if (!name) { alertBox("請輸入姓名", "請先輸入或選擇請假人員的名字。"); return false; }
+  if (BAD_KEY.test(name)) { alertBox("名字格式", "名字裡不能有 . $ # [ ] / 這些符號。"); return false; }
+  return applyPatch(dates, { [`leaves/${name}`]: type }, `已登記 ${name} ${type}`);
+}
+async function removeLeave(dates, name) {
+  name = (name || "").trim();
+  if (!name) { alertBox("請輸入姓名", "請先輸入或選擇要移除的人員。"); return false; }
+  const where = dates.length > 1 ? `${dates.length} 天` : fmtMD(parseYmd(dates[0]));
+  if (!(await confirmBox("移除請假", `移除 ${name} 在 ${where} 的請假登記？`, "移除", true))) return false;
+  return applyPatch(dates, { [`leaves/${name}`]: null }, `已移除 ${name} 的請假`);
+}
 
-        let lastSelectedInfo = [];
+// ==========================================
+// ☑ 多選
+// ==========================================
+function renderMultibar() {
+  let bar = $("#multibar");
+  if (!state.multiMode) { if (bar) bar.remove(); return; }
+  if (!bar) {
+    bar = document.createElement("div"); bar.id = "multibar"; bar.className = "multibar";
+    bar.innerHTML = `<span class="n" id="mb-n"></span><button class="btn primary" id="mb-edit">調整這些日子</button><button class="btn" id="mb-done">完成</button>`;
+    document.body.appendChild(bar);
+    $("#mb-edit").onclick = () => { if (state.multi.size) { refreshBatchSheet(); openSheet("batch"); applyOnlineState(); } else toast("先點選要調整的日子"); };
+    $("#mb-done").onclick = () => setMultiMode(false);
+  }
+  $("#mb-n").textContent = state.multi.size ? `已選 ${state.multi.size} 天` : "點日期來選取";
+}
+function setMultiMode(on, firstDate) {
+  state.multiMode = on;
+  state.multi = new Set(on && firstDate ? [firstDate] : []);
+  if (!on && state.openSheet === "batch") openSheet(null);
+  renderTools(); renderCalendar(); renderMultibar();
+  if (on) toast("多選：點日期加入或取消，選好按「調整這些日子」");
+}
+function refreshBatchSheet() {
+  const dates = Array.from(state.multi).sort(), n = dates.length;
+  if (!n) return;
+  const ds = dates.map(parseYmd);
+  const contiguous = dayDiff(ds[0], ds[n - 1]) === n - 1;
+  $("#b-title").textContent = `已選取 ${n} 天`;
+  $("#b-sub").textContent = contiguous ? `${fmtMD(ds[0])} ～ ${fmtMD(ds[n - 1])}` : ds.slice(0, 8).map(fmtMD).join("、") + (n > 8 ? "…" : "");
+  $("#b-apply").textContent = `套用到這 ${n} 天`;
+  $("#b-leave-add").textContent = `＋ 登記到這 ${n} 天`;
+  const cur = $("#b-duty").options.length ? $("#b-duty").value : "__keep";
+  $("#b-duty").innerHTML = `<option value="__keep">不變更</option><option value="">依輪值（預設）</option>` + state.rules.squads().map(s => `<option>${esc(s)}</option>`).join("");
+  $("#b-duty").value = cur;
+  if ($("#b-duty").selectedIndex < 0) $("#b-duty").value = "__keep";
+  if (!segGet($("#b-status"))) segSet($("#b-status"), "不變更");
+}
+function onBatchChip(reason, st) { segSet($("#b-status"), st); $("#b-reason").value = reason; }
+async function applyBatch() {
+  const changes = {}, st = segGet($("#b-status")), reason = $("#b-reason").value.trim();
+  if (st && st !== "不變更") {
+    changes.overrideDuty = STATUS_TO_OV[st] || null;
+    if ((st === "預設" || st === "上班") && !reason) changes.customReason = null;
+  }
+  if (reason) changes.customReason = reason;
+  const dv = $("#b-duty").value;
+  if (dv !== "__keep") { changes.dutySquad = dv || null; changes.bCycle = null; }
+  if (!Object.keys(changes).length) { alertBox("沒有變更", "請先選擇要調整的狀態、說明或值班隊。"); return; }
+  if (await applyPatch(Array.from(state.multi).sort(), changes, "已套用")) {
+    segSet($("#b-status"), "不變更"); $("#b-reason").value = ""; $("#b-duty").value = "__keep";
+  }
+}
+async function resetBatch() {
+  const n = state.multi.size;
+  if (await confirmBox("還原預設", `這 ${n} 天的手動調整（本隊狀態、說明、換班）都會清除，\n人員請假、案件與記事不受影響。`, "還原"))
+    applyPatch(Array.from(state.multi).sort(), Object.fromEntries(ADJUST_KEYS.map(k => [k, null])), "已還原預設");
+}
 
-        function selectDate(dateStr, squad, bCycle, isOff, reason) {
-            selectedDateStr = dateStr; lastSelectedInfo = [squad, bCycle, isOff, reason];
-            document.getElementById('edit-panel').style.display = "block";
-            let offTxt = isOff ? ` (${reason})` : "";
-            let dTxt = "";
-            if (squad === '偵二隊') dTxt = ` (值班 - ${bCycle})`;
-            else if (squad === '偵六隊') dTxt = " (本隊預備)";
-            
-            document.getElementById('sel-date-lbl').innerText = `📅 ${dateStr} | ${squad}${offTxt}${dTxt}`;
-            
-            let t = tasks[dateStr]; let tObj = {};
-            if (t) { if (typeof t === 'string') tObj = { case: t }; else tObj = t; }
-            
-            document.getElementById('case-text').value = tObj.case || "";
-            document.getElementById('note-text').value = tObj.note || "";
-            document.getElementById('override-duty').value = tObj.overrideDuty || "";
-            document.getElementById('custom-reason').value = tObj.customReason || "";
-            
-            setTimeout(() => { document.getElementById('edit-panel').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100); 
-        }
+// ==========================================
+// 🔄 同步與離線
+// ==========================================
+function saveCache() { lsSet(LS.tasks, state.tasks); }
+async function syncSettings() {
+  try {
+    const cloud = await fb("GET", "", SETTINGS_URL);
+    state.settingsOk = true;
+    if (cloud && cloud.rules && typeof cloud.rules === "object") {
+      state.settingsMeta = { updatedBy: cloud.updatedBy || "", updatedAt: cloud.updatedAt || "" };
+      const r = new Rules(cloud.rules);
+      if (JSON.stringify(r.data) !== JSON.stringify(state.rules.data)) { state.rules = r; lsSet(LS.rules, r.data); return true; }
+    }
+  } catch (e) {
+    if (e instanceof DbError) state.settingsOk = false;
+    else if (e instanceof AuthError) throw e;
+  }
+  return false;
+}
+async function loadAll(manual) {
+  if (manual && !(await confirmDiscard())) return;
+  if (manual) setStatus("同步中…");
+  state.busy++;
+  try {
+    const data = await fb("GET");
+    state.tasks = data && typeof data === "object" ? data : {};
+    saveCache();
+    state.online = true;
+    await syncSettings();
+  } catch (e) {
+    state.busy--;
+    if (e instanceof AuthError) { authLost(e.message); return; }
+    goOffline(e.message, true);
+    return;
+  }
+  state.busy--;
+  applyOnlineState();
+  setBanner(state.settingsOk ? "" : "⚠ 雲端規則無法讀取（Firebase Rules 需要開放 dutySettings），目前用內建規則。");
+  if (state.openSheet === "day" && !isDirty()) loadFields(state.selected);
+  renderAll();
+  setStatus(`✔ 已同步（${hhmm()}）`);
+  afterMainReady();
+}
+async function refreshFromCloud() {
+  if (state.busy || !state.mainVisible || !state.refreshToken) return;
+  const wasOnline = state.online;
+  state.busy++;
+  let data;
+  try { data = await fb("GET"); }
+  catch (e) {
+    state.busy--;
+    if (e instanceof AuthError) { authLost(e.message); return; }
+    if (wasOnline) setStatus(`⚠ 自動更新失敗（${hhmm()}），稍後再試`);
+    return;
+  }
+  data = data && typeof data === "object" ? data : {};
+  state.pollCount++;
+  let rulesChanged = false;
+  if (!wasOnline || state.pollCount % SETTINGS_POLL_EVERY === 0) { try { rulesChanged = await syncSettings(); } catch (e) {} }
+  state.busy--;
+  const changed = JSON.stringify(data) !== JSON.stringify(state.tasks);
+  if (!wasOnline) { state.online = true; applyOnlineState(); }
+  if (changed || !wasOnline || rulesChanged) {
+    state.tasks = data; saveCache();
+    if (state.openSheet === "day") { if (!isDirty()) loadFields(state.selected); else refreshDaySheet(true); }
+    renderAll();
+  }
+  if (!wasOnline) setStatus(`✔ 已重新連線（${hhmm()}）`);
+  else if (rulesChanged) setStatus(`↻ ${state.settingsMeta.updatedBy || "同事"}更新了規則（${hhmm()}）`);
+  else if (changed) setStatus(`↻ 已更新同事的修改（${hhmm()}）`);
+}
+function goOffline(reason, alertUser) {
+  state.online = false;
+  applyOnlineState();
+  renderAll();
+  const note = Object.keys(state.tasks).length ? "顯示這支手機上次載入的資料" : "沒有快取資料，只顯示輪值與假日";
+  setStatus(`⚠ 離線（唯讀）：${note}` + (state.refreshToken ? "；網路恢復後會自動重連" : ""));
+  if (alertUser) alertBox("離線模式", `${reason}\n\n目前為唯讀模式，${note}。`);
+  afterMainReady();
+}
+function authLost(msg) {
+  try { localStorage.removeItem(LS.refresh); } catch (e) {}
+  state.refreshToken = ""; state.idToken = ""; state.tokenExpiry = 0; state.online = false;
+  showLogin(msg);
+}
 
-        function renderCalendar() {
-            let y = currentDate.getFullYear(); let m = currentDate.getMonth();
-            document.getElementById('month-label').innerText = `${y} 年 ${m + 1} 月`;
-            
-            let calDiv = document.getElementById('calendar'); calDiv.innerHTML = "";
-            let days = ["一", "二", "三", "四", "五", "六", "日"];
-            days.forEach(d => { calDiv.innerHTML += `<div class="day-header">${d}</div>`; });
-            
-            let firstDay = new Date(y, m, 1); let lastDay = new Date(y, m + 1, 0);
-            let startWd = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; 
-            
-            for (let i = 0; i < startWd; i++) calDiv.innerHTML += `<div class="cal-cell empty"></div>`;
-            
-            let showOthers = document.getElementById('show-chk').checked; let realToday = new Date();
+// ==========================================
+// 👤 身分與 ⏰ 值班提醒
+// ==========================================
+function saveIdentity() { lsSet(LS.identity, state.identity); }
+function openIdentity(first) {
+  const roster = state.rules.roster.slice(), id = state.identity;
+  const NEW = "__new";
+  const known = id.name || "";
+  const opts = roster.map(([n, t], i) => `<option value="${i}">${esc(n)}（${teamLabel(t)}）</option>`).join("") + `<option value="${NEW}">＋ 新增身分（名冊裡沒有我）</option>`;
+  const hours = Array.from({ length: 9 }, (_, i) => 15 + i).map(h => `<option value="${h}">${h}:00</option>`).join("");
+  const html = `
+    <div class="sec" style="margin-top:12px">從名冊選擇</div>
+    <select id="i-pick"><option value="" disabled>請選擇</option>${opts}</select>
+    <div id="i-new" class="hidden"><div class="sec">姓名</div><input type="text" id="i-name" placeholder="你的名字">
+      <div class="hint" style="margin-top:4px">會自動加進全隊的成員名冊，同事下次也選得到。</div></div>
+    <div class="sec">小隊</div>
+    <label class="chk"><input type="radio" name="i-team" value="B1"> B1 小隊</label>
+    <label class="chk"><input type="radio" name="i-team" value="B2"> B2 小隊</label>
+    <label class="chk"><input type="radio" name="i-team" value=""> 隊部（隊長、副隊長等不分小隊）</label>
+    <label class="chk"><input type="checkbox" id="i-remember"> 記住這支手機（下次自動辨識）</label>
+    <div class="sec">⏰ 值班提醒</div>
+    <div class="row"><label class="chk" style="flex:1"><input type="checkbox" id="i-remind"> 值班前一天</label>
+      <select id="i-hour" style="width:100px">${hours}</select></div>
+    <div class="hint">網頁開著時跳提醒；想在沒開網頁時也收到，請到「⚙ 設定」匯出到手機行事曆。</div>
+    <div class="err" id="i-err" style="color:var(--off-fg);font-size:13px;min-height:18px;margin-top:6px"></div>`;
+  const p = ask(first ? "你是誰？" : "你的身分", "全隊共用這個行事曆：身分會記在你修改的日期上，也用來判斷值班提醒是日班還是夜班。",
+    [["preview", "預覽提醒", ""], ["cancel", "取消", ""], ["ok", "確定", "primary"]], html);
+  const wraps = document.querySelectorAll(".modal-wrap"), wrap = wraps[wraps.length - 1];
+  const pick = wrap.querySelector("#i-pick"), newBox = wrap.querySelector("#i-new"), nameIn = wrap.querySelector("#i-name");
+  const setTeam = t => wrap.querySelectorAll('input[name="i-team"]').forEach(r => { r.checked = r.value === (t || ""); });
+  const getTeam = () => { const r = wrap.querySelector('input[name="i-team"]:checked'); return r ? r.value : ""; };
+  const idx = roster.findIndex(r => r[0] === known);
+  if (idx >= 0) { pick.value = String(idx); setTeam(id.team != null ? id.team : roster[idx][1]); }
+  else if (known || !roster.length) { pick.value = NEW; nameIn.value = known; setTeam(id.team || ""); }
+  else { pick.value = ""; setTeam(""); }
+  const onPick = () => {
+    newBox.classList.toggle("hidden", pick.value !== NEW);
+    if (pick.value !== NEW && pick.value !== "") setTeam(roster[+pick.value][1]);
+  };
+  onPick(); pick.onchange = onPick;
+  wrap.querySelector("#i-remember").checked = id.remember !== false;
+  wrap.querySelector("#i-remind").checked = id.remind !== false;
+  wrap.querySelector("#i-hour").value = String(id.remindHour || 21);
+  // 讓「預覽」和格式錯誤時不要關掉視窗：攔截按鈕
+  const btns = wrap.querySelectorAll(".btns .btn");
+  const chosen = () => (pick.value === NEW ? nameIn.value.trim() : pick.value !== "" ? roster[+pick.value][0] : "");
+  btns[0].onclick = () => {
+    const dt = nextDutyDay();
+    if (!dt) { toast("接下來 60 天沒有本隊值班日"); return; }
+    showReminder(dt, reminderContent(dt, chosen(), getTeam()), true);
+  };
+  btns[2].onclick = async () => {
+    const name = chosen(), err = wrap.querySelector("#i-err");
+    if (!name) { err.textContent = "請選擇或輸入你的名字"; return; }
+    if (BAD_KEY.test(name)) { err.textContent = "名字裡不能有 . $ # [ ] / 這些符號"; return; }
+    const team = getTeam(), remember = wrap.querySelector("#i-remember").checked;
+    const remind = wrap.querySelector("#i-remind").checked, hour = +wrap.querySelector("#i-hour").value;
+    wrap.remove();
+    await applyIdentity(name, team, remember, remind, hour);
+  };
+  return p;
+}
+async function applyIdentity(name, team, remember, remind, hour) {
+  team = normalizeTeam(team);
+  const changedPerson = name !== state.identity.name;
+  state.identity = Object.assign({}, state.identity, { name, team, remember, remind, remindHour: hour });
+  if (changedPerson) delete state.identity.lastReminded;
+  if (remember) saveIdentity();
+  else lsSet(LS.identity, { remember: false, remind, remindHour: hour });
+  await ensureInRoster(name, team);
+  renderAll();
+  setStatus(`👤 目前身分：${name}（${teamLabel(team)}）`);
+  maybeRemind();
+}
+/** 把自己的姓名與小隊寫進全隊名冊（只改名冊這一欄，不動其他規則）。 */
+async function ensureInRoster(name, team) {
+  const same = () => state.rules.memberTeam.has(name) && state.rules.memberTeam.get(name) === team;
+  if (same() || !state.online) return;
+  try {
+    await syncSettings();
+    if (same()) return;
+    const roster = state.rules.roster.slice(), i = roster.findIndex(r => r[0] === name);
+    if (i >= 0) roster[i] = [name, team]; else roster.push([name, team]);
+    const text = formatMembers(roster);
+    await fb("PATCH", "", SETTINGS_URL, { "rules/members": text, updatedBy: name, updatedAt: nowStr() });
+    const data = clone(state.rules.data); data.members = text;
+    state.rules = new Rules(data); lsSet(LS.rules, data);
+  } catch (e) {
+    if (e instanceof AuthError) authLost(e.message);
+    else toast("名冊沒能寫到雲端：" + e.message);
+  }
+}
+function reminderContent(dt, name, team) {
+  name = name === undefined ? state.identity.name : name;
+  team = team === undefined ? state.identity.team : normalizeTeam(team);
+  const info = dayInfo(dt);
+  if (info.role !== "duty") return null;
+  const b = info.bCycle, shift = shiftOf(b, team), m = /^(B\d)日\/(B\d)夜$/.exec(b || "");
+  const main = shift ? `你是 ${team} 小隊：${shift}` : m ? `${m[1]} 日班、${m[2]} 夜班` : "班別未定，請確認";
+  const leave = name ? leavesOf(info.task)[name] : "";
+  return { main, b, shift, label: info.label, note: leave ? `你已登記這天「${leave}」，記得確認代班。` : "" };
+}
+function nextDutyDay(from) {
+  let d = addDays(from || new Date(), 1);
+  for (let i = 0; i < 60; i++, d = addDays(d, 1)) if (dayInfo(d).role === "duty") return d;
+  return null;
+}
+function maybeRemind(now) {
+  const id = state.identity;
+  if (!state.mainVisible || !id.name || id.remind === false) return false;
+  now = now || new Date();
+  if (now.getHours() < (id.remindHour || 21)) return false;
+  const tomorrow = addDays(now, 1), key = `${id.name}|${ymd(tomorrow)}`;
+  if (id.lastReminded === key) return false;
+  const c = reminderContent(tomorrow);
+  if (!c) return false;
+  id.lastReminded = key;
+  lsSet(LS.identity, id.remember === false ? { remember: false, remind: id.remind, remindHour: id.remindHour, lastReminded: key } : id);
+  showReminder(tomorrow, c, false, now);
+  return true;
+}
+function showReminder(dt, c, preview, now) {
+  const today = now || new Date();
+  const when = ymd(dt) === ymd(addDays(today, 1)) ? "明天 " : "";
+  const html = `<div style="font-size:19px;font-weight:800;margin-top:6px">${when}${fmtMD(dt)} ${esc(state.rules.my)}值班</div>
+    <div class="remind-box"><div class="big">${esc(c.main)}</div>${c.b ? `<div style="font-size:13px;margin-top:2px">班別：${esc(c.b)}</div>` : ""}</div>
+    ${c.label ? `<div style="margin-top:8px;font-size:14px">備註：${esc(c.label)}</div>` : ""}
+    ${c.note ? `<div style="margin-top:8px;font-size:14px;color:var(--off-fg)">${esc(c.note)}</div>` : ""}`;
+  if (!preview && navigator.vibrate) { try { navigator.vibrate([200, 100, 200]); } catch (e) {} }
+  ask("⏰ 值班提醒" + (preview ? "（預覽）" : ""), "", [["view", "查看那天", ""], ["ok", "知道了", "primary"]], html)
+    .then(k => { if (k === "view" && !preview) openDay(ymd(dt)); });
+}
+/** 匯出 .ics：手機行事曆會在值班前一天的提醒時間通知，不用開著網頁。 */
+function exportIcs() {
+  const id = state.identity;
+  if (!id.name) { openIdentity(true); return; }
+  const hour = id.remindHour || 21, hash = Array.from(id.name).reduce((h, c) => ((h * 31) + c.charCodeAt(0)) >>> 0, 7).toString(16);
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
+  const L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//DutyCalendar//ZH-TW", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
+             `X-WR-CALNAME:${state.rules.my}值班`];
+  let n = 0;
+  for (let i = 1; i <= 120; i++) {
+    const d = addDays(new Date(), i), info = dayInfo(d);
+    if (info.role !== "duty") continue;
+    const shift = shiftOf(info.bCycle, id.team);
+    const summary = `${state.rules.my}值班` + (shift ? `（${shift}）` : info.bCycle ? `（${info.bCycle}）` : "");
+    const ds = ymd(d).replace(/-/g, ""), de = ymd(addDays(d, 1)).replace(/-/g, "");
+    L.push("BEGIN:VEVENT", `UID:duty-${ds}-${hash}@duty-calendar`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${ds}`,
+           `DTEND;VALUE=DATE:${de}`, `SUMMARY:${summary}`, `DESCRIPTION:班別：${info.bCycle || "未定"}`,
+           "BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:明天${summary}`, `TRIGGER:-PT${24 - hour}H`, "END:VALARM", "END:VEVENT");
+    n++;
+  }
+  L.push("END:VCALENDAR");
+  if (!n) { alertBox("沒有值班日", "接下來 120 天沒有本隊值班日。"); return; }
+  const blob = new Blob([L.join("\r\n") + "\r\n"], { type: "text/calendar;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = `${state.rules.my}值班提醒.ics`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  toast(`已匯出 ${n} 個值班日（前一天 ${hour}:00 提醒）`);
+}
 
-            for (let d = 1; d <= lastDay.getDate(); d++) {
-                let dt = new Date(y, m, d);
-                let dStr = y + "-" + String(m+1).padStart(2,'0') + "-" + String(d).padStart(2,'0');
-                
-                let duty = getDailyDuty(dt); let offInfo = isUserOff(dt); let hName = getHolidayName(dt);
-                let squad = duty.squad; let isOff = offInfo.off; let reason = offInfo.reason;
-                
-                let task = tasks[dStr]; let tObj = {};
-                if (task) { if (typeof task === 'string') tObj = { case: task }; else tObj = task; }
+// ==========================================
+// 🚪 登入、啟動
+// ==========================================
+function showLogin(msg) {
+  state.mainVisible = false;
+  $("#loading").classList.add("hidden"); $("#main").classList.add("hidden"); $("#login").classList.remove("hidden");
+  openSheet(null);
+  $("#login-err").textContent = msg || "";
+  $("#acc").value = localStorage.getItem(LS.account) || "";
+  $("#offline-btn").classList.toggle("hidden", !Object.keys(state.tasks).length);
+  renderLegend();
+  (($("#acc").value) ? $("#pwd") : $("#acc")).focus();
+}
+function enterMain() {
+  state.mainVisible = true;
+  $("#loading").classList.add("hidden"); $("#login").classList.add("hidden"); $("#main").classList.remove("hidden");
+  renderAll(); applyOnlineState();
+}
+let readyDone = false;
+function afterMainReady() {
+  if (readyDone) return;
+  readyDone = true;
+  if (!state.identity.name) setTimeout(() => openIdentity(true), 200);
+  else setStatus($("#status").textContent + `　👤 已自動辨識：${state.identity.name}（${teamLabel(state.identity.team)}）`);
+  setTimeout(maybeRemind, 1500);
+  setInterval(maybeRemind, REMIND_CHECK_MS);
+  setInterval(() => { if (!document.hidden) refreshFromCloud(); }, POLL_MS);
+}
+async function doLogin() {
+  let acc = $("#acc").value.trim(); const pwd = $("#pwd").value;
+  if (!acc || !pwd) { $("#login-err").textContent = "請輸入帳號與密碼"; return; }
+  const email = acc.includes("@") ? acc : acc + EMAIL_DOMAIN;
+  const btn = $("#login-btn"); btn.disabled = true; btn.textContent = "登入中…";
+  try { await signIn(email, pwd); }
+  catch (e) { $("#login-err").textContent = e.message; btn.disabled = false; btn.textContent = "登入"; return; }
+  btn.disabled = false; btn.textContent = "登入";
+  try { localStorage.setItem(LS.account, acc); } catch (e) {}
+  $("#pwd").value = "";
+  enterMain();
+  await loadAll(false);
+}
+async function startup() {
+  buildStaticControls();
+  renderLegend();
+  if (!state.refreshToken) { showLogin(); return; }
+  try { await refreshId(); }
+  catch (e) {
+    if (e instanceof AuthError) { authLost(e.message); return; }
+    enterMain(); goOffline(e.message, true); return;
+  }
+  enterMain();
+  await loadAll(false);
+}
 
-                if (tObj.overrideDuty === 'off') isOff = true;
-                else if (tObj.overrideDuty === 'work') isOff = false;
+// ==========================================
+// 🖐 事件
+// ==========================================
+function changeMonth(n) { state.month = new Date(state.month.getFullYear(), state.month.getMonth() + n, 1); renderCalendar(); }
+function onCellTap(d) {
+  if (state.multiMode) {
+    if (state.multi.has(d)) state.multi.delete(d); else state.multi.add(d);
+    renderCalendar(); renderMultibar();
+    if (state.openSheet === "batch") refreshBatchSheet();
+    return;
+  }
+  openDay(d);
+}
+function setupEvents() {
+  $("#login-btn").onclick = doLogin;
+  $("#pwd").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+  $("#acc").addEventListener("keydown", e => { if (e.key === "Enter") $("#pwd").focus(); });
+  $("#offline-btn").onclick = () => { enterMain(); goOffline("尚未登入", false); };
+  $("#prev").onclick = () => changeMonth(-1);
+  $("#next").onclick = () => changeMonth(1);
+  $("#today").onclick = () => { const t = new Date(); state.month = new Date(t.getFullYear(), t.getMonth(), 1); if (!state.openSheet) state.selected = ymd(t); renderCalendar(); };
+  $("#sync").onclick = () => loadAll(true);
+  $("#multi-btn").onclick = () => setMultiMode(!state.multiMode);
+  $("#me-btn").onclick = () => openIdentity(false);
+  $("#settings-btn").onclick = () => {
+    $("#theme-sel").value = document.documentElement.getAttribute("data-theme");
+    $("#show-others").checked = !!state.showOthers;
+    const meta = state.settingsMeta.updatedAt ? `（最後更新：${state.settingsMeta.updatedBy || "未具名"}・${state.settingsMeta.updatedAt}）` : "";
+    $("#s-rules").textContent = `輪值順序、本隊／預備隊、成員名冊、自訂假日都存在雲端，和電腦版共用；請在電腦版的「⚙ 規則」修改。${meta}`;
+    openSheet("settings");
+  };
+  $("#backdrop").onclick = () => closeSheet();
+  document.querySelectorAll("[data-close]").forEach(b => b.onclick = () => closeSheet());
+  $("#theme-sel").onchange = e => { document.documentElement.setAttribute("data-theme", e.target.value); try { localStorage.setItem(LS.theme, e.target.value); } catch (err) {} };
+  $("#show-others").onchange = e => { state.showOthers = e.target.checked; lsSet(LS.others, state.showOthers); renderCalendar(); };
+  $("#s-identity").onclick = () => openIdentity(false);
+  $("#s-ics").onclick = exportIcs;
+  $("#s-logout").onclick = async () => {
+    if (!(await confirmBox("登出", "要登出這支手機，並清除手機上的快取資料嗎？（不影響其他同事）", "登出", true))) return;
+    for (const k of [LS.refresh, LS.tasks]) { try { localStorage.removeItem(k); } catch (e) {} }
+    state.tasks = {}; authLost("已登出");
+  };
 
-                let displayReason = tObj.customReason ? tObj.customReason : (reason || hName);
-                
-                let cls = "cal-cell";
-                if (isOff) cls += " cell-off";
-                else if (squad === '偵二隊') cls += " cell-duty";
-                
-                if (dt.getFullYear() === realToday.getFullYear() && dt.getMonth() === realToday.getMonth() && dt.getDate() === realToday.getDate()) {
-                    cls += " today-glow";
-                }
-                
-                let showSquad = squad;
-                if (!showOthers && squad !== '偵二隊' && squad !== '偵六隊') showSquad = "";
+  // 單日編輯
+  $("#d-status").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b || !state.online) return;
+    segSet($("#d-status"), b.dataset.v);
+    if (SQUAD_CHIPS.some(([r]) => r === $("#d-reason").value.trim())) $("#d-reason").value = "";
+    refreshDaySheet(false);
+  });
+  for (const id of ["#d-reason", "#d-case", "#d-note"]) $(id).addEventListener("input", () => refreshDaySheet(false));
+  for (const id of ["#d-duty", "#d-b"]) $(id).addEventListener("change", () => refreshDaySheet(false));
+  $("#d-save").onclick = () => saveDay();
+  $("#d-reset").onclick = resetFields;
+  $("#d-leave-add").onclick = async () => {
+    if (await addLeave([state.selected], $("#d-leave-name").value, $("#d-leave-type").value)) $("#d-leave-name").value = "";
+  };
 
-                let html = `<div class="date-num">${d}</div>`;
-                
-                if (squad === '偵二隊') {
-                    if (showSquad) html += `<div class="info-txt">${showSquad}</div>`;
-                    if (!isOff) html += `<div class="info-txt">${duty.bCycle}</div>`;
-                    if (displayReason) {
-                        if (isOff) html += `<div class="info-txt">(${displayReason})</div>`;
-                        else html += `<div class="info-txt">[${displayReason}]</div>`;
-                    }
-                } else if (squad === '偵六隊') {
-                    html += `<div class="reserve-txt">${showSquad ? '偵六隊(預備)' : '(預備)'}</div>`;
-                    if (isOff && displayReason) html += `<div class="info-txt">(${displayReason})</div>`;
-                    else if (!isOff && tObj.customReason) html += `<div class="info-txt">[${tObj.customReason}]</div>`;
-                } else {
-                    if (showSquad) html += `<div class="info-txt">${showSquad}</div>`;
-                    if (isOff && displayReason) html += `<div class="info-txt">(${displayReason})</div>`;
-                    else if (!isOff && tObj.customReason) html += `<div class="info-txt">[${tObj.customReason}]</div>`;
-                }
-                
-                if (tObj.case && tObj.case.trim()) html += `<div class="task-case">⭐案件</div>`;
-                if (tObj.note && tObj.note.trim()) html += `<div class="task-note">📌記事</div>`;
-                
-                let cellDiv = document.createElement('div');
-                cellDiv.className = cls; cellDiv.innerHTML = html;
-                cellDiv.onclick = () => selectDate(dStr, squad, duty.bCycle, isOff, offInfo.reason);
-                calDiv.appendChild(cellDiv);
-            }
-        }
-    </script>
+  // 多選
+  $("#b-status").addEventListener("click", e => { const b = e.target.closest("button"); if (b && state.online) segSet($("#b-status"), b.dataset.v); });
+  $("#b-apply").onclick = applyBatch;
+  $("#b-reset").onclick = resetBatch;
+  $("#b-leave-add").onclick = async () => {
+    if (await addLeave(Array.from(state.multi).sort(), $("#b-leave-name").value, $("#b-leave-type").value)) $("#b-leave-name").value = "";
+  };
+  $("#b-leave-del").onclick = () => removeLeave(Array.from(state.multi).sort(), $("#b-leave-name").value);
+
+  // 月曆：點選、長按進入多選、左右滑動換月
+  const cal = $("#cal");
+  let pressTimer = null, longPressed = false, sx = 0, sy = 0;
+  cal.addEventListener("click", e => {
+    const c = e.target.closest(".cell"); if (!c) return;
+    if (longPressed) { longPressed = false; return; }
+    onCellTap(c.dataset.d);
+  });
+  cal.addEventListener("contextmenu", e => {
+    const c = e.target.closest(".cell"); if (!c) return;
+    e.preventDefault();
+    if (!state.multiMode) setMultiMode(true, c.dataset.d);
+  });
+  cal.addEventListener("touchstart", e => {
+    const t = e.changedTouches[0]; sx = t.screenX; sy = t.screenY; longPressed = false;
+    const c = e.target.closest(".cell");
+    clearTimeout(pressTimer);
+    if (c && !state.multiMode) pressTimer = setTimeout(() => { longPressed = true; setMultiMode(true, c.dataset.d); if (navigator.vibrate) navigator.vibrate(30); }, 550);
+  }, { passive: true });
+  cal.addEventListener("touchmove", e => {
+    const t = e.changedTouches[0];
+    if (Math.abs(t.screenX - sx) > 10 || Math.abs(t.screenY - sy) > 10) clearTimeout(pressTimer);
+  }, { passive: true });
+  cal.addEventListener("touchend", e => {
+    clearTimeout(pressTimer);
+    const t = e.changedTouches[0], dx = t.screenX - sx, dy = t.screenY - sy;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 45) changeMonth(dx < 0 ? 1 : -1);
+  }, { passive: true });
+
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && state.mainVisible) { refreshFromCloud(); maybeRemind(); } });
+  window.addEventListener("online", () => refreshFromCloud());
+  window.addEventListener("resize", () => { clearTimeout(setupEvents._r); setupEvents._r = setTimeout(renderCalendar, 150); });
+  window.addEventListener("beforeunload", e => { if (isDirty()) { e.preventDefault(); e.returnValue = ""; } });
+}
+
+setupEvents();
+startup();
+</script>
 </body>
 </html>
