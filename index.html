@@ -184,6 +184,34 @@
   .leave .t { color: var(--leave-fg); }
   .leave button { margin-left: auto; border: 0; background: transparent; color: var(--muted); font-size: 17px; cursor: pointer; padding: 0 4px; }
   .dirty { color: var(--accent); font-size: 12.5px; font-weight: 700; }
+  /* 案件、記事清單 */
+  .lvsum { margin-top: 4px; color: var(--leave-fg); font-weight: 700; }
+  .lvsum:empty { display: none; }
+  .sec.ent-h { font-size: 15px; font-weight: 800; margin-top: 18px; }
+  .elist { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+  .elist .empty { font-size: 13px; color: var(--muted); padding: 0 2px; }
+  .entry { display: flex; align-items: flex-start; gap: 2px; background: var(--surface2); border-radius: 10px;
+    padding: 8px 4px 8px 11px; border-left: 4px solid var(--ec); }
+  .entry .em { flex: 1; min-width: 0; padding-top: 1px; }
+  .entry .et { font-size: 16px; font-weight: 700; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+  .entry .ew { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .entry .ib { border: 0; background: transparent; color: var(--muted); font-size: 16px; width: 34px; height: 34px;
+    border-radius: 8px; cursor: pointer; flex: none; }
+  .entry .ib:disabled { opacity: .3; }
+  .entry.editing { flex-direction: column; align-items: stretch; padding-right: 10px; }
+  .entry.editing .row { margin-top: 8px; justify-content: flex-end; }
+  details.adjust { margin-top: 20px; border: 1px solid var(--border); border-radius: 12px; padding: 0 12px; }
+  details.adjust > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 13px 0;
+    font-size: 15px; font-weight: 800; }
+  details.adjust > summary::-webkit-details-marker { display: none; }
+  details.adjust > summary::after { content: "▾"; margin-left: auto; color: var(--muted); transition: transform .2s; }
+  details.adjust:not([open]) > summary::after { transform: rotate(-90deg); }
+  details.adjust .adj-sub { font-size: 12.5px; font-weight: 600; color: var(--muted); min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  details.adjust .adj-sub.adj { color: var(--manual-fg); }
+  details.adjust .adj-body { border-top: 1px solid var(--border); padding-bottom: 14px; }
+  #day-sheet .body { padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+  .sheet .foot.hide { display: none; }
 
   /* 多選列 */
   .multibar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 30;
@@ -267,34 +295,50 @@
       </div>
       <button class="x" data-close="day" aria-label="關閉">✕</button>
     </div>
-    <div class="card"><div id="d-default"></div><div class="res" id="d-result"></div></div>
+    <div class="card"><div id="d-default"></div><div class="res" id="d-result"></div><div class="lvsum" id="d-leave-sum"></div></div>
 
-    <div class="sec">本隊這天</div>
-    <div class="seg" id="d-status" data-ro></div>
-    <div class="chips" id="d-chips"><span class="hint">快速：</span></div>
-    <div class="sec">說明／標籤（例如：輪休、停休、專案勤務）</div>
-    <input type="text" id="d-reason" data-ro>
+    <!-- 最常看的放最上面：執行案件、一般記事 -->
+    <div class="sec ent-h" style="color:var(--case-fg)">⭐ 執行案件</div>
+    <div class="elist" id="d-cases" style="--ec:var(--case-fg)"></div>
+    <div class="row add">
+      <input type="text" class="grow" id="d-case-new" placeholder="新增案件（建議只填代號）" enterkeyhint="send" autocomplete="off" data-ro>
+      <button class="btn" id="d-case-add" data-ro>＋ 新增</button>
+    </div>
+    <div class="sec ent-h" style="color:var(--note-fg)">📌 一般記事</div>
+    <div class="elist" id="d-notes" style="--ec:var(--note-fg)"></div>
+    <div class="row add">
+      <input type="text" class="grow" id="d-note-new" placeholder="新增記事" enterkeyhint="send" autocomplete="off" data-ro>
+      <button class="btn" id="d-note-add" data-ro>＋ 新增</button>
+    </div>
+    <div class="hint" style="margin-top:6px">新增或修改後會自動記下你的名字和時間，馬上存到雲端。</div>
 
-    <details class="swap" id="d-swap">
-      <summary id="d-swap-sum">換班調整</summary>
-      <div class="grid2">
-        <span>值班隊</span><select id="d-duty" data-ro></select>
-        <span id="d-b-lbl">本隊班別</span><select id="d-b" data-ro></select>
+    <!-- 其他調整：預設收起來 -->
+    <details class="adjust" id="d-adjust">
+      <summary><span>⚙ 調整這天</span><span class="adj-sub" id="d-adj-sub"></span></summary>
+      <div class="adj-body">
+        <div class="sec">本隊這天</div>
+        <div class="seg" id="d-status" data-ro></div>
+        <div class="chips" id="d-chips"><span class="hint">快速：</span></div>
+        <div class="sec">說明／標籤（例如：輪休、停休、專案勤務）</div>
+        <input type="text" id="d-reason" data-ro>
+
+        <details class="swap" id="d-swap">
+          <summary id="d-swap-sum">換班調整</summary>
+          <div class="grid2">
+            <span>值班隊</span><select id="d-duty" data-ro></select>
+            <span id="d-b-lbl">本隊班別</span><select id="d-b" data-ro></select>
+          </div>
+        </details>
+
+        <div class="sec" style="color:var(--leave-fg)" id="d-leave-title">👤 人員請假</div>
+        <div id="d-leaves"></div>
+        <div class="row">
+          <input type="text" class="grow" id="d-leave-name" list="roster-list" placeholder="姓名" data-ro>
+          <select id="d-leave-type" style="width:92px" data-ro></select>
+          <button class="btn" id="d-leave-add" data-ro>＋ 登記</button>
+        </div>
       </div>
     </details>
-
-    <div class="sec" style="color:var(--leave-fg)" id="d-leave-title">👤 人員請假</div>
-    <div id="d-leaves"></div>
-    <div class="row">
-      <input type="text" class="grow" id="d-leave-name" list="roster-list" placeholder="姓名" data-ro>
-      <select id="d-leave-type" style="width:92px" data-ro></select>
-      <button class="btn" id="d-leave-add" data-ro>＋ 登記</button>
-    </div>
-
-    <div class="sec" style="color:var(--case-fg)">⭐ 執行案件（建議只填代號）</div>
-    <textarea id="d-case" rows="2" data-ro></textarea>
-    <div class="sec" style="color:var(--note-fg)">📌 一般記事</div>
-    <textarea id="d-note" rows="3" data-ro></textarea>
   </div>
   <div class="foot">
     <div class="grow" style="flex:1;min-width:0"><span class="dirty" id="d-dirty"></span></div>
@@ -382,7 +426,7 @@ const STATUS_TO_OV = { "預設": "", "上班": "上班", "休假": "輪休" };
 const OV_TO_STATUS = { "": "預設", "上班": "上班", "輪休": "休假", "off": "休假", "work": "上班" };
 const OV_ALIASES = { off: "輪休", work: "上班" };   // 舊手機版存的是 off／work
 const ADJUST_KEYS = ["overrideDuty", "customReason", "dutySquad", "bCycle"];
-const FORM_KEYS = ["case", "note"].concat(ADJUST_KEYS);
+const FORM_KEYS = ADJUST_KEYS;          // 用「儲存」鈕送出的欄位；案件、記事是逐筆即時存
 const META_KEYS = ["updatedBy", "updatedAt"];
 const FIELD_NAMES = { case: "執行案件", note: "記事", overrideDuty: "本隊狀態", customReason: "說明／標籤", dutySquad: "值班隊", bCycle: "班別" };
 const BAD_KEY = /[.$#\[\]\/]/;
@@ -429,6 +473,22 @@ const norm = v => (typeof v === "string" ? v.trim() : "");
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const clone = o => JSON.parse(JSON.stringify(o));
 const firstLine = s => { s = norm(s); return s ? s.split(/\r?\n/)[0].trim() : ""; };
+
+// 案件／記事：一行一筆，行尾的〔姓名・月/日 時:分〕記錄是誰、什麼時候寫的（電腦版也看得懂）
+const STAMP_ANY = /\s*〔([^〔〕\n]{1,24})・(\d{1,2}\/\d{1,2} \d{1,2}:\d{2})〕/g;
+const splitLines = s => norm(s).split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+function parseEntry(raw) {
+  const all = [...raw.matchAll(STAMP_ANY)];
+  if (!all.length) return { text: raw, by: "", at: "", raw };
+  const last = all[all.length - 1];
+  return { text: raw.replace(STAMP_ANY, "").trim(), by: last[1], at: last[2], raw };
+}
+const entriesOf = s => splitLines(s).map(parseEntry).filter(e => e.text);
+const firstEntry = s => { const e = entriesOf(s)[0]; return e ? e.text : ""; };
+function stampLine(text, who) {
+  const d = new Date(), w = String(who || "").replace(/[〔〕・\s]/g, "").slice(0, 24) || "未具名";
+  return `${text.replace(/\s+/g, " ").trim()}〔${w}・${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}〕`;
+}
 const fmtMD = d => `${d.getMonth() + 1}/${d.getDate()}（${WD[d.getDay()]}）`;
 const lsGet = (k, fallback) => { try { const v = localStorage.getItem(k); return v == null ? fallback : JSON.parse(v); } catch (e) { return fallback; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
@@ -671,7 +731,7 @@ function cellEvents(info, wide) {
   else if (info.label) E.push([info.label, "manual-fg"]);
   const lv = Object.entries(info.leaves).sort((a, b) => a[0].localeCompare(b[0], "zh-Hant"));
   for (const [n, v] of lv) E.push([wide ? `${n} ${v || "請假"}` : `${n}${LEAVE_SHORT[v] || (v ? v[0] : "")}`, "leave-fg"]);
-  const c = firstLine(info.task.case), n = firstLine(info.task.note);
+  const c = firstEntry(info.task.case), n = firstEntry(info.task.note);
   if (c) E.push([c, "case-fg"]);
   if (n) E.push([n, "note-fg"]);
   if (state.showOthers && info.squad !== state.rules.my && info.squad !== "未知") E.push([`${info.squad}值班`, "muted"]);
@@ -768,6 +828,7 @@ function applyOnlineState() {
     else el.disabled = !state.online;
   });
   $("#d-save").textContent = state.online ? "💾 儲存" : "離線：無法儲存";
+  if (state.openSheet === "day") renderEntries();
 }
 
 // ==========================================
@@ -877,18 +938,33 @@ function readFields() {
   const ds = $("#d-duty").value || "";
   let b = $("#d-b").value || "";
   if ((ds || base.squad) !== state.rules.my) b = "";
-  return { case: $("#d-case").value.trim(), note: $("#d-note").value.trim(),
-           overrideDuty: STATUS_TO_OV[segGet($("#d-status"))] || "", customReason: $("#d-reason").value.trim(),
+  return { overrideDuty: STATUS_TO_OV[segGet($("#d-status"))] || "", customReason: $("#d-reason").value.trim(),
            dutySquad: ds, bCycle: b };
 }
 function writeFields(vals, d) {
-  $("#d-case").value = norm(vals.case); $("#d-note").value = norm(vals.note); $("#d-reason").value = norm(vals.customReason);
+  $("#d-reason").value = norm(vals.customReason);
   segSet($("#d-status"), OV_TO_STATUS[vals.overrideDuty || ""] || "預設");
   fillDutySelects(d, norm(vals.dutySquad), norm(vals.bCycle));
   $("#d-swap").open = !!(norm(vals.dutySquad) || norm(vals.bCycle));
 }
 function loadFields(d) { writeFields(task(d), d); state.snapshot = readFields(); refreshDaySheet(true); }
-const isDirty = () => state.openSheet === "day" && state.snapshot && JSON.stringify(readFields()) !== JSON.stringify(state.snapshot);
+const adjustDirty = () => state.openSheet === "day" && !!state.snapshot && JSON.stringify(readFields()) !== JSON.stringify(state.snapshot);
+/** 打了字還沒按「新增」、或修改到一半的案件／記事 */
+function pendingEntries() {
+  const out = [];
+  for (const field of ["case", "note"]) {
+    const v = $(`#d-${field}-new`).value.trim();
+    if (v) out.push({ kind: "add", field, text: v });
+  }
+  const ed = state.editing, inp = $("#d-edit-input");
+  if (ed && inp && inp.value.trim() !== ed.text) out.push({ kind: "edit", field: ed.field, raw: ed.raw, text: inp.value });
+  return out;
+}
+const isDirty = () => state.openSheet === "day" && (adjustDirty() || pendingEntries().length > 0);
+function clearPending() {
+  $("#d-case-new").value = ""; $("#d-note-new").value = "";
+  state.editing = null;
+}
 
 function refreshDaySheet(full) {
   const d = state.selected, dt = parseYmd(d), f = readFields(), base = state.rules.duty(dt);
@@ -903,8 +979,121 @@ function refreshDaySheet(full) {
   $("#d-meta").textContent = norm(t.updatedAt) ? `最後修改：${norm(t.updatedBy) || "（未具名）"}・${norm(t.updatedAt)}` : "";
   $("#d-default").textContent = "預設　" + describe(dayInfo(dt, {}));
   $("#d-result").textContent = ADJUST_KEYS.some(k => f[k]) ? "調整後　" + describe(dayInfo(dt, f)) : "沒有手動調整，依預設";
-  $("#d-dirty").textContent = isDirty() ? "● 有修改尚未儲存" : "";
-  if (full) renderLeaves();
+  const aDirty = adjustDirty();
+  $("#d-dirty").textContent = aDirty ? "● 有修改尚未儲存" : "";
+  // 收起來的「調整這天」標題列，簡短顯示目前狀態
+  const lv = Object.entries(leavesOf(t)).sort((a, b) => a[0].localeCompare(b[0], "zh-Hant"));
+  $("#d-leave-sum").textContent = lv.length ? "請假：" + lv.map(([n, v]) => `${n}（${v || "請假"}）`).join("、") : "";
+  const adjusted = ADJUST_KEYS.some(k => f[k]);
+  const parts = [];
+  if (aDirty) parts.push("● 尚未儲存"); else if (adjusted) parts.push("已調整");
+  if (lv.length) parts.push(`請假 ${lv.length} 人`);
+  $("#d-adj-sub").textContent = parts.length ? parts.join("・") : "上班／休假・換班・人員請假";
+  $("#d-adj-sub").classList.toggle("adj", aDirty || adjusted);
+  $("#day-sheet .foot").classList.toggle("hide", !($("#d-adjust").open || aDirty));
+  if (full) { renderLeaves(); renderEntries(); }
+}
+
+// ---------- 案件／記事清單 ----------
+function renderEntries() {
+  const t = task(state.selected), ed = state.editing;
+  const oldInp = $("#d-edit-input"), draft = ed && oldInp ? oldInp.value : null;
+  let editingShown = false;
+  for (const field of ["case", "note"]) {
+    const box = $(field === "case" ? "#d-cases" : "#d-notes"), es = entriesOf(t[field]);
+    box.innerHTML = es.length ? es.map((e, i) => {
+      if (ed && ed.field === field && ed.raw === e.raw && !editingShown) {
+        editingShown = true;
+        return `<div class="entry editing"><input type="text" id="d-edit-input" value="${esc(draft != null ? draft : e.text)}" enterkeyhint="done" autocomplete="off">
+          <div class="row"><button class="btn" type="button" data-ecancel>取消</button><button class="btn primary" type="button" data-esave>✔ 儲存修改</button></div></div>`;
+      }
+      return `<div class="entry"><div class="em"><div class="et">${esc(e.text)}</div>` +
+        (e.by ? `<div class="ew">${esc(e.by)}・${esc(e.at)}</div>` : "") +
+        `</div><button class="ib" type="button" data-eedit="${i}" aria-label="修改">✎</button>` +
+        `<button class="ib" type="button" data-edel="${i}" aria-label="刪除">✕</button></div>`;
+    }).join("") : `<div class="empty">（尚無）</div>`;
+    box.querySelectorAll("[data-eedit]").forEach(b => { b.disabled = !state.online; b.onclick = () => startEdit(field, es[+b.dataset.eedit]); });
+    box.querySelectorAll("[data-edel]").forEach(b => { b.disabled = !state.online; b.onclick = () => deleteEntry(field, es[+b.dataset.edel]); });
+  }
+  if (ed && !editingShown) state.editing = null;      // 那筆已被同事刪除或修改
+  const inp = $("#d-edit-input");
+  if (inp) {
+    const cur = state.editing;
+    inp.onkeydown = e => {
+      if (e.isComposing || e.keyCode === 229) return;  // 注音選字中
+      if (e.key === "Enter") { e.preventDefault(); commitEdit(cur.field, cur.raw, inp.value); }
+      else if (e.key === "Escape") cancelEdit();
+    };
+    $("[data-esave]").onclick = () => commitEdit(cur.field, cur.raw, inp.value);
+    $("[data-ecancel]").onclick = cancelEdit;
+  }
+}
+function startEdit(field, e) {
+  if (!state.online) return;
+  state.editing = { field, raw: e.raw, text: e.text };
+  renderEntries();
+  const inp = $("#d-edit-input");
+  if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+}
+function cancelEdit() { state.editing = null; renderEntries(); }
+
+/** 先抓雲端最新的那一欄再改，避免蓋掉同事剛新增的內容。fn 回傳 null＝找不到要改的那筆。 */
+async function mutateEntries(field, fn, doneMsg) {
+  if (!state.online) { alertBox("離線模式", "目前離線，無法修改。網路恢復後會自動重連，也可以按「🔄 同步」。"); return false; }
+  const d = state.selected;
+  state.busy++;
+  try {
+    const cur = await fb("GET", `/${d}/${field}`);
+    const lines = splitLines(typeof cur === "string" ? cur : "");
+    const out = fn(lines);
+    if (!out) {
+      applyLocal(d, { [field]: lines.join("\n") });
+      state.editing = null;
+      if (state.openSheet === "day" && state.selected === d) refreshDaySheet(true);
+      renderCalendar();
+      alertBox("同事剛改過", "這筆內容已被同事修改或刪除，畫面已更新成最新內容，請再確認一次。");
+      return false;
+    }
+    const text = out.join("\n"), meta = { updatedBy: state.identity.name || "未具名", updatedAt: nowStr() };
+    await fb("PATCH", "", TASKS_URL, { [`${d}/${field}`]: text || null, [`${d}/updatedBy`]: meta.updatedBy, [`${d}/updatedAt`]: meta.updatedAt });
+    applyLocal(d, Object.assign({ [field]: text }, meta));
+  } catch (e) { handleError(e, "儲存失敗"); return false; }
+  finally { state.busy--; }
+  saveCache();
+  if (state.openSheet === "day" && state.selected === d) refreshDaySheet(true);
+  renderCalendar();
+  toast(`✔ ${doneMsg}`);
+  setStatus(`✔ ${doneMsg}（${hhmm()}）`);
+  return true;
+}
+const FIELD_SHORT = { case: "案件", note: "記事" };
+async function addEntry(field) {
+  const inp = $(`#d-${field}-new`), text = inp.value.replace(/\s+/g, " ").trim();
+  if (!text) { inp.focus(); return false; }
+  const line = stampLine(text, state.identity.name);
+  const ok = await mutateEntries(field, lines => lines.concat(line), `已新增${FIELD_SHORT[field]}`);
+  if (ok && inp.value.replace(/\s+/g, " ").trim() === text) inp.value = "";
+  if (ok) refreshDaySheet(false);
+  return ok;
+}
+async function commitEdit(field, raw, text) {
+  text = String(text || "").replace(/\s+/g, " ").trim();
+  if (!text) return deleteEntry(field, parseEntry(raw));
+  if (text === parseEntry(raw).text) { cancelEdit(); return true; }
+  const line = stampLine(text, state.identity.name);
+  const ok = await mutateEntries(field, lines => {
+    const i = lines.indexOf(raw); if (i < 0) return null;
+    const out = lines.slice(); out[i] = line; return out;
+  }, `已修改${FIELD_SHORT[field]}`);
+  if (ok) { state.editing = null; renderEntries(); }
+  return ok;
+}
+async function deleteEntry(field, e) {
+  if (!(await confirmBox(`刪除${FIELD_SHORT[field]}`, `要刪除「${e.text}」嗎？`, "刪除", true))) return false;
+  return mutateEntries(field, lines => {
+    const i = lines.indexOf(e.raw); if (i < 0) return null;
+    const out = lines.slice(); out.splice(i, 1); return out;
+  }, `已刪除${FIELD_SHORT[field]}`);
 }
 function renderLeaves() {
   const lv = Object.entries(leavesOf(task(state.selected))).sort((a, b) => a[0].localeCompare(b[0], "zh-Hant"));
@@ -919,6 +1108,7 @@ function renderLeaves() {
 }
 async function openDay(d) {
   if (state.openSheet === "day" && d !== state.selected && !(await confirmDiscard())) return;
+  if (!(state.openSheet === "day" && d === state.selected)) { clearPending(); $("#d-adjust").open = false; }
   state.selected = d;
   const dt = parseYmd(d);
   if (dt.getMonth() !== state.month.getMonth() || dt.getFullYear() !== state.month.getFullYear()) state.month = new Date(dt.getFullYear(), dt.getMonth(), 1);
@@ -931,10 +1121,15 @@ async function openDay(d) {
 function onChip(reason, st) { segSet($("#d-status"), st); $("#d-reason").value = reason; refreshDaySheet(false); }
 async function confirmDiscard() {
   if (!isDirty()) return true;
-  const ans = await ask("尚未儲存", `${state.selected} 的內容已修改但還沒儲存。`,
+  const pend = pendingEntries();
+  const what = pend.length && !adjustDirty()
+    ? `打好的${[...new Set(pend.map(p => FIELD_SHORT[p.field]))].join("、")}還沒送出。`
+    : `${state.selected} 的內容已修改但還沒儲存。`;
+  const ans = await ask("尚未儲存", what,
     [["cancel", "取消", ""], ["discard", "不要了", "danger"], ["save", "儲存", "primary"]]);
   if (ans === "cancel") return false;
   if (ans === "save") return await saveDay();
+  clearPending();
   loadFields(state.selected);
   return true;
 }
@@ -951,10 +1146,16 @@ function handleError(e, title) {
 /** 只送出有改的欄位；同事剛好也改了同一欄時先詢問。 */
 async function saveDay() {
   if (!state.online) { alertBox("離線模式", "目前離線，無法儲存。網路恢復後會自動重連，也可以按「🔄 同步」。"); return false; }
+  // 先送出打好但還沒按「新增」的案件／記事、修改到一半的那筆
+  const pend = pendingEntries();
+  for (const p of pend) {
+    const ok = p.kind === "add" ? await addEntry(p.field) : await commitEdit(p.field, p.raw, p.text);
+    if (!ok) return false;
+  }
   const d = state.selected, vals = readFields(), orig = state.snapshot || {};
   const changed = {};
   for (const k of FORM_KEYS) if (vals[k] !== (orig[k] || "")) changed[k] = vals[k];
-  if (!Object.keys(changed).length) { toast("沒有需要儲存的修改"); return true; }
+  if (!Object.keys(changed).length) { if (!pend.length) toast("沒有需要儲存的修改"); return true; }
   state.busy++;
   let server = {};
   try {
@@ -1446,7 +1647,14 @@ function setupEvents() {
     if (SQUAD_CHIPS.some(([r]) => r === $("#d-reason").value.trim())) $("#d-reason").value = "";
     refreshDaySheet(false);
   });
-  for (const id of ["#d-reason", "#d-case", "#d-note"]) $(id).addEventListener("input", () => refreshDaySheet(false));
+  $("#d-reason").addEventListener("input", () => refreshDaySheet(false));
+  $("#d-adjust").addEventListener("toggle", () => refreshDaySheet(false));
+  for (const field of ["case", "note"]) {
+    $(`#d-${field}-add`).onclick = () => addEntry(field);
+    $(`#d-${field}-new`).addEventListener("keydown", e => {
+      if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); addEntry(field); }
+    });
+  }
   for (const id of ["#d-duty", "#d-b"]) $(id).addEventListener("change", () => refreshDaySheet(false));
   $("#d-save").onclick = () => saveDay();
   $("#d-reset").onclick = resetFields;
@@ -1503,5 +1711,6 @@ startup();
 </script>
 </body>
 </html>
+
 
 
