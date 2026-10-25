@@ -2,7 +2,7 @@
 <html lang="zh-Hant-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#14161B">
@@ -161,7 +161,8 @@
     background: var(--surface); border-radius: 18px 18px 0 0; transform: translateY(105%); transition: transform .25s ease;
     z-index: 41; display: flex; flex-direction: column; box-shadow: 0 -10px 30px var(--shadow); }
   .sheet.show { transform: none; }
-  .sheet .grab { width: 40px; height: 5px; background: var(--border); border-radius: 3px; margin: 8px auto 0; flex: none; }
+  .sheet .grab { height: 22px; flex: none; display: flex; align-items: center; justify-content: center; touch-action: none; cursor: grab; }
+  .sheet .grab::before { content: ""; width: 44px; height: 5px; background: var(--muted); opacity: .45; border-radius: 3px; }
   .sheet .body { overflow-y: auto; padding: 8px 16px 16px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
   .sheet .foot { flex: none; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border);
     display: flex; gap: 8px; align-items: center; background: var(--surface); border-radius: 0; }
@@ -782,9 +783,61 @@ function openSheet(name) {
   state.openSheet = name || null;
 }
 async function closeSheet() {
-  if (state.openSheet === "day" && !(await confirmDiscard())) return;
+  if (state.openSheet === "day" && !(await confirmDiscard())) return false;
   openSheet(null);
   renderCalendar();
+  return true;
+}
+
+// 往下滑關閉面板：上方把手隨時可以拉；內容捲到最上面時，往下拉也可以
+function enableSwipeClose(sheet) {
+  const body = sheet.querySelector(".body"), back = $("#backdrop");
+  let g = null;
+  const scrolledInside = el => { for (; el && el !== sheet; el = el.parentElement) if (el.scrollTop > 0) return true; return false; };
+  const setY = y => {
+    sheet.style.transform = y > 0 ? `translateY(${y}px)` : "";
+    back.style.opacity = String(Math.max(0, 1 - y / (sheet.offsetHeight || 1)));
+  };
+  const reset = () => { sheet.style.transform = ""; back.style.opacity = ""; };
+  const finish = async close => {
+    sheet.style.transition = ""; back.style.transition = "";
+    if (!close) { reset(); return; }
+    // 有未儲存的修改：先彈回原位，再問要不要儲存
+    if (state.openSheet === "day" && isDirty()) reset();
+    if (sheet.contains(document.activeElement)) document.activeElement.blur();
+    await closeSheet();
+    reset();
+  };
+  sheet.addEventListener("touchstart", e => {
+    g = null;
+    if (e.touches.length !== 1 || !sheet.classList.contains("show")) return;
+    const t = e.touches[0], handle = !!e.target.closest(".grab");
+    if (!handle && scrolledInside(e.target)) return;      // 內容還沒捲到頂：照常捲動
+    g = { x0: t.clientX, y0: t.clientY, handle, mode: null, y: 0, hist: [[t.clientY, e.timeStamp]] };
+  }, { passive: true });
+  sheet.addEventListener("touchmove", e => {
+    if (!g) return;
+    const t = e.touches[0], dx = t.clientX - g.x0, dy = t.clientY - g.y0;
+    if (!g.mode) {
+      if (!dx && !dy) return;
+      if (dy > 0 && dy >= Math.abs(dx)) {
+        g.mode = "drag"; sheet.style.transition = "none"; back.style.transition = "none";
+      } else { g = null; return; }                           // 往上或左右：交給原本的捲動
+    }
+    if (e.cancelable) e.preventDefault();
+    if (dy >= 0) setY(dy);
+    else { setY(0); if (!g.handle) body.scrollTop = -dy; }  // 拉下後又往上推：改成捲動內容
+    g.y = Math.max(0, dy);
+    g.hist.push([t.clientY, e.timeStamp]); if (g.hist.length > 5) g.hist.shift();
+  }, { passive: false });
+  sheet.addEventListener("touchend", () => {
+    if (!g || g.mode !== "drag") { g = null; return; }
+    const [y1, t1] = g.hist[0], [y2, t2] = g.hist[g.hist.length - 1];
+    const v = t2 > t1 ? (y2 - y1) / (t2 - t1) : 0;          // px/ms，正值＝往下甩
+    const close = g.y > Math.min(140, sheet.offsetHeight * 0.3) || (v > 0.5 && g.y > 30);
+    g = null; finish(close);
+  });
+  sheet.addEventListener("touchcancel", () => { const drag = g && g.mode === "drag"; g = null; if (drag) finish(false); });
 }
 
 // ==========================================
@@ -1374,6 +1427,7 @@ function setupEvents() {
     openSheet("settings");
   };
   $("#backdrop").onclick = () => closeSheet();
+  document.querySelectorAll(".sheet").forEach(enableSwipeClose);
   document.querySelectorAll("[data-close]").forEach(b => b.onclick = () => closeSheet());
   $("#theme-sel").onchange = e => { document.documentElement.setAttribute("data-theme", e.target.value); try { localStorage.setItem(LS.theme, e.target.value); } catch (err) {} };
   $("#show-others").onchange = e => { state.showOthers = e.target.checked; lsSet(LS.others, state.showOthers); renderCalendar(); };
@@ -1449,5 +1503,4 @@ startup();
 </script>
 </body>
 </html>
-
 
