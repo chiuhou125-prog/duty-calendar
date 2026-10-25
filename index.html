@@ -727,8 +727,8 @@ function renderCalendar() {
   const y = state.month.getFullYear(), m = state.month.getMonth();
   $("#month-title").textContent = `${y} 年 ${m + 1} 月`;
   $("#roc").textContent = `民國 ${y - 1911} 年`;
-  const first = new Date(y, m, 1), lead = first.getDay(), ndays = new Date(y, m + 1, 0).getDate();
-  const weeks = Math.ceil((lead + ndays) / 7), start = addDays(first, -lead);
+  const first = new Date(y, m, 1), lead = first.getDay();
+  const weeks = 6, start = addDays(first, -lead);   // 固定 6 列，每個月版面高度一致
   const today = ymd(new Date()), sel = selectedSet();
   const wide = window.innerWidth >= 600, maxEv = wide ? 5 : 4;
   let html = WD.split("").map((d, i) => `<div class="wd${i === 0 ? " sun" : i === 6 ? " sat" : ""}">${d}</div>`).join("");
@@ -1503,4 +1503,5 @@ startup();
 </script>
 </body>
 </html>
+
 
