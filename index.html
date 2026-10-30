@@ -211,7 +211,37 @@
   details.adjust .adj-sub.adj { color: var(--manual-fg); }
   details.adjust .adj-body { border-top: 1px solid var(--border); padding-bottom: 14px; }
   #day-sheet .body { padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+  /* 值班人員 */
+  .lineup:empty { display: none; }
+  .lineup { margin-top: 12px; }
+  .lu-head { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800; }
+  .lnk { border: 0; background: transparent; color: var(--accent); font-weight: 700; font-size: 13px; cursor: pointer; padding: 4px 2px; }
+  .lu-head .lnk { margin-left: auto; }
+  .lu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+  .lu-col { background: var(--surface2); border-radius: 12px; padding: 9px 10px 8px; min-width: 0; }
+  .lu-t { font-size: 12.5px; font-weight: 800; color: var(--muted); margin-bottom: 3px; white-space: nowrap; }
+  .lu-r { display: flex; gap: 6px; font-size: 15px; line-height: 1.65; }
+  .lu-r .k { flex: none; width: 2.3em; color: var(--muted); font-size: 12.5px; padding-top: 2px; }
+  .lu-r .v { min-width: 0; font-weight: 700; word-break: break-all; }
+  .lu-r.duty .v { color: var(--duty-fg); font-size: 16.5px; }
+  .lu-r.away .v { color: var(--off-fg); font-weight: 600; font-size: 13px; padding-top: 2px; }
+  .lu-note { font-size: 12px; color: var(--manual-fg); margin-top: 3px; line-height: 1.4; }
+  .me { background: var(--accent); color: var(--accent-text); border-radius: 5px; padding: 0 4px; }
   .sheet .foot.hide { display: none; }
+  /* 值班人員順序編輯 */
+  .lrow { display: flex; align-items: center; gap: 4px; background: var(--surface2); border-radius: 10px; padding: 5px 4px 5px 10px; margin-bottom: 6px; }
+  .lrow .no { width: 1.6em; color: var(--muted); font-size: 13px; font-weight: 700; flex: none; }
+  .lrow .nm { flex: 1; min-width: 0; font-size: 16px; font-weight: 800; }
+  .lrow .ib { border: 0; background: transparent; color: var(--text); font-size: 16px; width: 34px; height: 34px; border-radius: 8px; cursor: pointer; flex: none; }
+  .lrow .ib:disabled { opacity: .25; }
+  .lrow .mini { border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 12.5px; font-weight: 700; border-radius: 8px; padding: 5px 8px; cursor: pointer; flex: none; }
+  .lpv { font-size: 13.5px; line-height: 1.55; padding: 7px 10px; border-radius: 10px; background: var(--surface2); margin-bottom: 5px; }
+  .lpv b { color: var(--duty-fg); }
+  .lpv .d { font-weight: 800; margin-right: 6px; }
+  .lhist { display: flex; align-items: center; gap: 6px; padding: 8px 4px 8px 10px; border-radius: 10px; background: var(--surface2); margin-bottom: 6px; font-size: 13.5px; line-height: 1.5; cursor: pointer; }
+  .lhist.cur { outline: 2px solid var(--accent); }
+  .lhist .t { flex: 1; min-width: 0; }
+  .lhist .t b { font-weight: 800; }
 
   /* 多選列 */
   .multibar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 30;
@@ -296,6 +326,7 @@
       <button class="x" data-close="day" aria-label="關閉">✕</button>
     </div>
     <div class="card"><div id="d-default"></div><div class="res" id="d-result"></div><div class="lvsum" id="d-leave-sum"></div></div>
+    <div class="lineup" id="d-lineup"></div>
 
     <!-- 最常看的放最上面：執行案件、一般記事 -->
     <div class="sec ent-h" style="color:var(--case-fg)">⭐ 執行案件</div>
@@ -329,6 +360,11 @@
             <span id="d-b-lbl">本隊班別</span><select id="d-b" data-ro></select>
           </div>
         </details>
+
+        <div id="d-lu-adj" class="hidden">
+          <div class="sec">👮 這天的值班人員（手動指定，只改這一天）</div>
+          <div class="grid2" id="d-lu-sel"></div>
+        </div>
 
         <div class="sec" style="color:var(--leave-fg)" id="d-leave-title">👤 人員請假</div>
         <div id="d-leaves"></div>
@@ -391,10 +427,55 @@
     <button class="btn block" id="s-identity">👤 身分、小隊、提醒時間</button>
     <button class="btn block" id="s-ics" style="margin-top:8px">📅 匯出值班提醒到手機行事曆</button>
     <div class="hint" style="margin-top:6px">網頁版只有開著時才能跳提醒。匯出到手機行事曆後，就算沒開網頁，前一天也會準時提醒；換班或輪序變動後記得重新匯出。</div>
+    <div class="sec">值班人員</div>
+    <button class="btn block" id="s-lineup">👮 值班人員順序（B1／B2 小隊）</button>
+    <div class="hint" style="margin-top:6px">人員請假會自動跳過；調動、新人加入時在這裡改，從指定的那次值班開始生效。</div>
     <div class="sec">輪值規則</div>
     <div class="hint" id="s-rules"></div>
     <div class="sec">帳號</div>
     <button class="btn danger block" id="s-logout">登出這支手機</button>
+  </div>
+</div>
+
+<!-- 值班人員順序 -->
+<div class="sheet" id="lineup-sheet" aria-hidden="true">
+  <div class="grab"></div>
+  <div class="body">
+    <div class="sh-head">
+      <div style="min-width:0">
+        <div class="sh-title">👮 值班人員順序</div>
+        <div class="sh-sub">每次輪到本隊值班，值班往下一位移動，大備是再下一位，其餘二備。輪到的人請假，由下一位遞補，之後照順序往下。</div>
+      </div>
+      <button class="x" data-close="lineup" aria-label="關閉">✕</button>
+    </div>
+    <div class="seg" id="l-team" style="margin-top:12px"></div>
+    <div class="card" id="l-now"></div>
+
+    <div class="sec">從哪一次值班開始改</div>
+    <select id="l-start" data-ro></select>
+    <div class="hint" id="l-start-hint" style="margin-top:4px"></div>
+
+    <div class="sec">值班順序（由上往下輪）</div>
+    <div id="l-order"></div>
+    <div class="sec">只當二備（還沒排進輪值）</div>
+    <div id="l-backup"></div>
+    <div class="row" style="margin-top:8px">
+      <input type="text" class="grow" id="l-add" list="roster-list" placeholder="姓名" autocomplete="off" data-ro>
+      <button class="btn" id="l-add-btn" data-ro>＋ 加入順序</button>
+    </div>
+    <div class="sec">械管（固定）</div>
+    <input type="text" id="l-keeper" list="roster-list" autocomplete="off" data-ro>
+    <div class="sec">那天由誰值班</div>
+    <select id="l-first" data-ro></select>
+
+    <div class="sec">套用後的接下來 6 次</div>
+    <div id="l-preview"></div>
+    <div class="sec">變更紀錄（點一筆可以載入修改）</div>
+    <div id="l-history"></div>
+  </div>
+  <div class="foot">
+    <div class="grow" style="flex:1;min-width:0"><span class="dirty" id="l-dirty"></span></div>
+    <button class="btn primary" id="l-save" data-ro>💾 儲存</button>
   </div>
 </div>
 
@@ -413,7 +494,7 @@ const API_KEY = "AIzaSyAJdTuKBRpj2So4QPyCllHc0ucva4qx5g8";   // Firebase Web API
 const EMAIL_DOMAIN = "@ntpd.gov.tw";
 const HTTP_TIMEOUT = 12000, POLL_MS = 60000, REMIND_CHECK_MS = 30000, SETTINGS_POLL_EVERY = 3;
 const LS = { theme: "duty_app_theme", refresh: "duty_app_refresh", account: "duty_app_account", identity: "duty_identity",
-             tasks: "duty_cache_tasks", rules: "duty_cache_rules", others: "duty_show_others" };
+             tasks: "duty_cache_tasks", rules: "duty_cache_rules", others: "duty_show_others", lineup: "duty_cache_lineup" };
 
 const THEME_NAMES = { default: "🚓 經典暗黑", minimal: "☕ 無印文青", nature: "🏕 自然原木", ocean: "🌊 休閒海洋", minecraft: "🧱 麥塊像素" };
 const WD = "日一二三四五六";
@@ -425,10 +506,13 @@ const LEAVE_TYPES = ["休假", "補休", "事假", "病假", "公假", "公差",
 const STATUS_TO_OV = { "預設": "", "上班": "上班", "休假": "輪休" };
 const OV_TO_STATUS = { "": "預設", "上班": "上班", "輪休": "休假", "off": "休假", "work": "上班" };
 const OV_ALIASES = { off: "輪休", work: "上班" };   // 舊手機版存的是 off／work
-const ADJUST_KEYS = ["overrideDuty", "customReason", "dutySquad", "bCycle"];
+const BASE_ADJUST_KEYS = ["overrideDuty", "customReason", "dutySquad", "bCycle"];
+const LINEUP_KEYS = ["lineup/B1/duty", "lineup/B1/standby", "lineup/B2/duty", "lineup/B2/standby"];
+const ADJUST_KEYS = BASE_ADJUST_KEYS.concat(LINEUP_KEYS);
 const FORM_KEYS = ADJUST_KEYS;          // 用「儲存」鈕送出的欄位；案件、記事是逐筆即時存
 const META_KEYS = ["updatedBy", "updatedAt"];
-const FIELD_NAMES = { case: "執行案件", note: "記事", overrideDuty: "本隊狀態", customReason: "說明／標籤", dutySquad: "值班隊", bCycle: "班別" };
+const FIELD_NAMES = { case: "執行案件", note: "記事", overrideDuty: "本隊狀態", customReason: "說明／標籤", dutySquad: "值班隊", bCycle: "班別",
+  "lineup/B1/duty": "B1 值班人", "lineup/B1/standby": "B1 大備", "lineup/B2/duty": "B2 值班人", "lineup/B2/standby": "B2 大備" };
 const BAD_KEY = /[.$#\[\]\/]/;
 
 const DEFAULT_RULES = {
@@ -586,11 +670,150 @@ class Rules {
 }
 
 // ==========================================
+// 👮 值班人員輪序（雲端 /dutySettings/lineup，與電腦版共用）
+//   每次輪到本隊值班：「值班」往順序的下一位移動，「大備」是再下一位，其餘「二備」，械管固定。
+//   輪到的人當天請假 → 由下一位遞補，之後從遞補的人往下排（請假的人這輪跳過，不補回）。
+//   periods：從某次值班起改用新名單；first＝那天指定由誰值班（空白＝照順序接下去）。
+//   這天手動指定（tasks/{日期}/lineup/B1/duty…）只改那一天，不影響之後的順序。
+// ==========================================
+const DEFAULT_LINEUP = {
+  B1: { periods: [
+    { start: "2026-10-25", order: ["俊碩", "沅霖", "俊然"], backup: [], keeper: "德儒", first: "俊碩" },
+    { start: "2026-11-03", order: ["俊碩", "沅霖", "俊然"], backup: ["俊勇"], keeper: "德儒", first: "" },
+    { start: "2026-11-21", order: ["俊碩", "俊勇", "沅霖", "俊然"], backup: [], keeper: "德儒", first: "" },
+  ] },
+  B2: { periods: [
+    { start: "2026-10-25", order: ["智豪", "邵桓", "博雯"], backup: [], keeper: "邱鎬", first: "智豪" },
+  ] },
+};
+const LINEUP_ROLES = ["值班", "大備", "二備", "械管"];
+const uniqNames = v => [...new Set(listOf(v).map(s => String(s == null ? "" : s).trim()).filter(Boolean))];
+function parseLineupTeam(sq) {
+  const ps = [];
+  for (const p of listOf(sq && sq.periods)) {
+    if (!p || typeof p !== "object") continue;
+    const start = parseYmd(String(p.start || ""));
+    if (!start) continue;
+    const keeper = String(p.keeper || "").trim();
+    const order = uniqNames(p.order).filter(n => n !== keeper);
+    const backup = uniqNames(p.backup).filter(n => !order.includes(n) && n !== keeper);
+    const first = String(p.first || "").trim();
+    ps.push({ start: ymd(start), order, backup, keeper, first: order.includes(first) ? first : "" });
+  }
+  ps.sort((a, b) => (a.start < b.start ? -1 : a.start > b.start ? 1 : 0));
+  return { periods: ps.filter((p, i) => i === ps.length - 1 || ps[i + 1].start !== p.start) };   // 同一天只留一筆
+}
+function parseLineup(raw) {
+  const out = {};
+  for (const T of TEAMS) {
+    const sq = raw && typeof raw === "object" ? raw[T] : null;
+    out[T] = parseLineupTeam(sq && typeof sq === "object" ? sq : DEFAULT_LINEUP[T]);
+  }
+  return out;
+}
+/** 存到雲端的格式（空的名單也要留下標記，免得 Firebase 把整筆刪掉後又變回預設） */
+const lineupTeamForCloud = sq => ({ periods: sq.periods.map(p => ({ start: p.start, order: p.order, backup: p.backup, keeper: p.keeper, first: p.first || "" })), saved: true });
+
+/**
+ * 算出從第一筆輪序到 until 為止，每個本隊值班日的人員。回傳 Map(日期 → { bCycle, B1, B2 })。
+ * 每隊：{ duty, standby, backups[], keeper, away[[姓名, 假別]], skipped（輪到但請假的人）, manual, shift }
+ */
+function lineupMap(until, lineup) {
+  lineup = lineup || state.lineup;
+  const res = new Map();
+  const starts = TEAMS.flatMap(T => lineup[T].periods.map(p => p.start)).sort();
+  if (!starts.length) return res;
+  const end = typeof until === "string" ? parseYmd(until) : until;
+  const ptr = { B1: { name: "", order: [], period: -1 }, B2: { name: "", order: [], period: -1 } };
+  for (let d = parseYmd(starts[0]); d <= end; d = addDays(d, 1)) {
+    const info = dayInfo(d);
+    if (info.role !== "duty") continue;      // 只有本隊真的值班的日子才輪
+    const k = ymd(d), lv = info.leaves, here = n => !Object.prototype.hasOwnProperty.call(lv, n);
+    const ov = info.task.lineup && typeof info.task.lineup === "object" ? info.task.lineup : {};
+    const m = /^(B\d)日\/(B\d)夜$/.exec(info.bCycle || "");
+    const day = { bCycle: info.bCycle };
+    for (const T of TEAMS) {
+      const ps = lineup[T].periods;
+      let i = -1;
+      while (i + 1 < ps.length && ps[i + 1].start <= k) i++;
+      if (i < 0) continue;
+      const p = ps[i], st = ptr[T], n = p.order.length;
+      let from = 0;
+      if (st.period !== i && p.first) from = p.order.indexOf(p.first);
+      else if (st.name && n) {
+        const j = p.order.indexOf(st.name);
+        if (j >= 0) from = (j + 1) % n;
+        else {   // 上一位值班的人不在新名單：沿舊順序往後找第一個還在新名單的人
+          const o = st.order, at = o.indexOf(st.name);
+          from = 0;
+          for (let s = 1; s <= o.length; s++) { const x = p.order.indexOf(o[(at + s) % o.length]); if (x >= 0) { from = x; break; } }
+        }
+      }
+      st.period = i;
+      let duty = "", skipped = "";
+      for (let s = 0; s < n; s++) {
+        const nm = p.order[(from + s) % n];
+        if (here(nm)) { duty = nm; break; }
+        if (!skipped) skipped = nm;
+      }
+      if (duty) { st.name = duty; st.order = p.order; }
+      let standby = "";
+      if (duty) {
+        const j = p.order.indexOf(duty);
+        for (let s = 1; s < n; s++) { const nm = p.order[(j + s) % n]; if (here(nm)) { standby = nm; break; } }
+      }
+      const autoDuty = duty, autoStandby = standby;
+      // 這天手動指定（只影響這一天）
+      const o = ov[T] && typeof ov[T] === "object" ? ov[T] : {};
+      const oDuty = norm(o.duty), oStandby = norm(o.standby);
+      const manual = !!(oDuty || oStandby);
+      if (oDuty) duty = oDuty;
+      if (oStandby) standby = oStandby;
+      if (standby === duty) standby = "";
+      const everyone = [];
+      for (const x of [duty, standby]) if (x && !everyone.includes(x)) everyone.push(x);
+      const j0 = Math.max(0, p.order.indexOf(duty));
+      for (let s = 1; s <= n; s++) { const x = p.order[(j0 + s) % n]; if (x && !everyone.includes(x)) everyone.push(x); }
+      for (const x of p.backup) if (!everyone.includes(x)) everyone.push(x);
+      const backups = everyone.filter(x => x !== duty && x !== standby && x !== p.keeper && here(x));
+      const away = everyone.concat(p.keeper ? [p.keeper] : []).filter((x, idx, a) => a.indexOf(x) === idx && !here(x) && x !== duty && x !== standby)
+        .map(x => [x, lv[x] || "請假"]);
+      day[T] = { duty, standby, backups, keeper: p.keeper, keeperAway: !!p.keeper && !here(p.keeper), away, autoDuty, autoStandby,
+                 skipped: manual ? "" : skipped, manual, shift: m ? (m[1] === T ? "日班" : m[2] === T ? "夜班" : "") : "" };
+    }
+    if (day.B1 || day.B2) res.set(k, day);
+  }
+  return res;
+}
+const lineupOn = d => lineupMap(d).get(d) || null;
+/** 某人在這天的角色：值班／大備／二備／械管／請假，沒有就回傳空字串 */
+function roleIn(R, name) {
+  if (!R || !name) return "";
+  if (R.duty === name) return "值班";
+  if (R.standby === name) return "大備";
+  if (R.backups.includes(name)) return "二備";
+  if (R.keeper === name) return R.keeperAway ? "請假" : "械管";
+  if (R.away.some(([n]) => n === name)) return "請假";
+  return "";
+}
+function myRole(day, name) {
+  if (!day || !name) return null;
+  for (const T of TEAMS) { const r = roleIn(day[T], name); if (r) return { team: T, role: r, shift: day[T].shift }; }
+  return null;
+}
+const lineupNames = () => {
+  const s = new Set();
+  for (const T of TEAMS) for (const p of state.lineup[T].periods) for (const n of [...p.order, ...p.backup, p.keeper]) if (n) s.add(n);
+  return [...s];
+};
+
+// ==========================================
 // 📦 狀態
 // ==========================================
 const state = {
   tasks: lsGet(LS.tasks, {}) || {},
   rules: new Rules(lsGet(LS.rules, null)),
+  lineup: parseLineup(lsGet(LS.lineup, null)), lineupMeta: {},
   settingsMeta: {}, settingsOk: true,
   online: false, mainVisible: false, busy: 0, pollCount: 0,
   idToken: "", refreshToken: localStorage.getItem(LS.refresh) || "", tokenExpiry: 0,
@@ -709,8 +932,13 @@ function dayInfo(dt, t) {
   const reason = isOff ? (custom || (aOff ? aReason : "") || "輪休") : "";
   const role = squad === r.my ? (isOff ? "duty_off" : "duty") : squad === r.reserve ? "reserve" : "other";
   return { squad, bCycle: b, isOff, reason, label: isOff ? "" : custom, holiday: r.holidayName(dt), task: t,
-           role, manual: !!(ov || sqOv || bOv), leaves: leavesOf(t) };
+           role, manual: !!(ov || sqOv || bOv || hasLineupOverride(t)), leaves: leavesOf(t) };
 }
+function hasLineupOverride(t) {
+  const lu = t && t.lineup;
+  return !!(lu && typeof lu === "object" && TEAMS.some(T => lu[T] && typeof lu[T] === "object" && (norm(lu[T].duty) || norm(lu[T].standby))));
+}
+const getPath = (o, path) => path.split("/").reduce((x, k) => (x && typeof x === "object" ? x[k] : undefined), o);
 function describe(info) {
   const my = state.rules.my;
   const duty = info.squad === my ? `${my}值班 ${info.bCycle}`.trim() : info.squad === "未知" ? "輪值未設定" : `${info.squad}值班`;
@@ -721,9 +949,18 @@ function describe(info) {
 }
 const LEAVE_SHORT = { "休假": "休", "補休": "補", "事假": "事", "病假": "病", "公假": "公", "公差": "差", "喪假": "喪", "婚假": "婚" };
 /** 一天要顯示的標籤：[文字, 顏色變數]。手機直式時文字精簡，方便一格放下。 */
-function cellEvents(info, wide) {
+function cellEvents(info, wide, lu) {
   const E = [];
-  if (info.role === "duty") E.push([wide ? `值班 ${info.bCycle}`.trim() : (info.bCycle.replace("/", "") || "本隊值班"), "duty-fg"]);
+  const m = /^(B\d)日\/(B\d)夜$/.exec(info.bCycle || "");
+  if (info.role === "duty" && lu && m) {
+    // 值班日：直接寫出日班、夜班的值班人
+    for (const [T, s] of [[m[1], "日"], [m[2], "夜"]]) {
+      const R = lu[T];
+      E.push([R ? (wide ? `${s}班 ${R.duty || "未排"}` : `${s}${R.duty || T}`) : (wide ? `${s}班 ${T}` : `${s}${T}`), "duty-fg"]);
+    }
+    const me = myRole(lu, state.identity.name);
+    if (me && ["值班", "大備", "二備"].includes(me.role)) E.push([`我${me.role}`, "accent"]);
+  } else if (info.role === "duty") E.push([wide ? `值班 ${info.bCycle}`.trim() : (info.bCycle.replace("/", "") || "本隊值班"), "duty-fg"]);
   else if (info.role === "duty_off") E.push(["本隊值班日", "muted"]);
   else if (info.role === "reserve") E.push(["預備", "reserve-fg"]);
   if (info.holiday) E.push([info.holiday, "holiday-fg"]);
@@ -775,6 +1012,7 @@ function renderLegend() {
     `<span>${ev(r.my + "值班", "duty-fg")}</span>` +
     `<span><i class="sw" style="background:var(--off-bg);border-color:var(--off-fg)"></i>本隊休假</span>` +
     `<span>${ev("預備", "reserve-fg")}${esc(r.reserve)}值班</span>` +
+    `<span>${ev("日○○", "duty-fg")}日班值班人</span><span>${ev("我大備", "accent")}你的備勤</span>` +
     `<span>${ev("節日", "holiday-fg")}</span><span>${ev("人員請假", "leave-fg")}</span>` +
     `<span>${ev("案件", "case-fg")}</span><span>${ev("記事", "note-fg")}</span>` +
     `<span><b style="color:var(--manual-fg)">✎</b>手動調整過</span>`;
@@ -792,12 +1030,13 @@ function renderCalendar() {
   const today = ymd(new Date()), sel = selectedSet();
   const wide = window.innerWidth >= 600, maxEv = wide ? 5 : 4;
   let html = WD.split("").map((d, i) => `<div class="wd${i === 0 ? " sun" : i === 6 ? " sat" : ""}">${d}</div>`).join("");
+  const LU = lineupMap(addDays(start, weeks * 7 - 1));
   for (let i = 0; i < weeks * 7; i++) {
     const dt = addDays(start, i), d = ymd(dt), inMonth = dt.getMonth() === m, info = dayInfo(dt);
     let cls = "cell" + (dt.getDay() === 0 ? " sun" : dt.getDay() === 6 ? " sat" : "");
     if (!inMonth) cls += " other"; else if (info.isOff) cls += " off"; else if (info.role === "duty") cls += " duty";
     if (sel.has(d)) cls += state.multiMode ? " sel msel" : " sel";
-    let evs = cellEvents(info, wide);
+    let evs = cellEvents(info, wide, LU.get(d));
     if (evs.length > maxEv) evs = evs.slice(0, maxEv - 1).concat([[`＋${evs.length - maxEv + 1}`, "more"]]);
     html += `<div class="${cls}" data-d="${d}"><div class="top"><span class="num${d === today ? " today" : ""}">${dt.getDate()}</span></div>` +
       (inMonth && info.manual ? '<span class="mk">✎</span>' : "") +
@@ -817,9 +1056,11 @@ function renderAll() {
   renderLegend(); renderTools(); renderCalendar(); renderMultibar();
   if (state.openSheet === "day") refreshDaySheet(true);
   if (state.openSheet === "batch") refreshBatchSheet();
+  if (state.openSheet === "lineup") renderLineupEditor();
 }
 function leaveNames() {
   const names = state.rules.members.slice(), me = state.identity.name;
+  for (const n of lineupNames()) if (!names.includes(n)) names.push(n);
   return me ? [me].concat(names.filter(n => n !== me)) : names;
 }
 function applyOnlineState() {
@@ -829,13 +1070,14 @@ function applyOnlineState() {
   });
   $("#d-save").textContent = state.online ? "💾 儲存" : "離線：無法儲存";
   if (state.openSheet === "day") renderEntries();
+  if (state.openSheet === "lineup") renderLineupEditor();
 }
 
 // ==========================================
 // 📲 面板開關
 // ==========================================
 function openSheet(name) {
-  for (const s of ["day", "batch", "settings"]) {
+  for (const s of ["day", "batch", "settings", "lineup"]) {
     $(`#${s}-sheet`).classList.toggle("show", s === name);
     $(`#${s}-sheet`).setAttribute("aria-hidden", s === name ? "false" : "true");
   }
@@ -845,6 +1087,7 @@ function openSheet(name) {
 }
 async function closeSheet() {
   if (state.openSheet === "day" && !(await confirmDiscard())) return false;
+  if (state.openSheet === "lineup" && !(await confirmLineupDiscard())) return false;
   openSheet(null);
   renderCalendar();
   return true;
@@ -864,7 +1107,7 @@ function enableSwipeClose(sheet) {
     sheet.style.transition = ""; back.style.transition = "";
     if (!close) { reset(); return; }
     // 有未儲存的修改：先彈回原位，再問要不要儲存
-    if (state.openSheet === "day" && isDirty()) reset();
+    if ((state.openSheet === "day" && isDirty()) || (state.openSheet === "lineup" && state.lu && state.lu.dirty)) reset();
     if (sheet.contains(document.activeElement)) document.activeElement.blur();
     await closeSheet();
     reset();
@@ -938,14 +1181,59 @@ function readFields() {
   const ds = $("#d-duty").value || "";
   let b = $("#d-b").value || "";
   if ((ds || base.squad) !== state.rules.my) b = "";
-  return { overrideDuty: STATUS_TO_OV[segGet($("#d-status"))] || "", customReason: $("#d-reason").value.trim(),
-           dutySquad: ds, bCycle: b };
+  const out = { overrideDuty: STATUS_TO_OV[segGet($("#d-status"))] || "", customReason: $("#d-reason").value.trim(),
+                dutySquad: ds, bCycle: b };
+  for (const k of LINEUP_KEYS) { const el = $(`#d-lu-${k.split("/").slice(1).join("-")}`); out[k] = el ? el.value : ""; }
+  return out;
 }
 function writeFields(vals, d) {
   $("#d-reason").value = norm(vals.customReason);
   segSet($("#d-status"), OV_TO_STATUS[vals.overrideDuty || ""] || "預設");
   fillDutySelects(d, norm(vals.dutySquad), norm(vals.bCycle));
   $("#d-swap").open = !!(norm(vals.dutySquad) || norm(vals.bCycle));
+  fillLineupSelects(d, vals);
+}
+/** 「調整這天」裡手動指定值班人、大備的下拉選單 */
+function fillLineupSelects(d, vals) {
+  const info = dayInfo(parseYmd(d)), lu = info.role === "duty" ? lineupOn(d) : null;
+  $("#d-lu-adj").classList.toggle("hidden", !lu);
+  const all = lineupNames();
+  let html = "";
+  for (const T of TEAMS) {
+    const R = lu && lu[T];
+    for (const [f, label] of [["duty", "值班"], ["standby", "大備"]]) {
+      const cur = norm(getPath(vals, `lineup/${T}/${f}`));
+      const auto = R ? (f === "duty" ? R.autoDuty : R.autoStandby) : "";
+      const mine = R ? [R.autoDuty, R.autoStandby, ...R.backups, ...R.away.map(a => a[0]), R.keeper].filter(Boolean) : [];
+      const names = [...new Set(mine.concat(all).concat(cur ? [cur] : []))];
+      html += `<span>${T} ${label}</span><select id="d-lu-${T}-${f}" data-ro><option value="">依輪序（${esc(auto || "未排")}）</option>` +
+        names.map(n => `<option${n === cur ? " selected" : ""}>${esc(n)}</option>`).join("") + `</select>`;
+    }
+  }
+  $("#d-lu-sel").innerHTML = html;
+  for (const el of $("#d-lu-sel").querySelectorAll("select")) { el.disabled = !state.online; el.onchange = () => refreshDaySheet(false); }
+}
+/** 單日畫面上方的「值班人員」卡片 */
+function renderLineupCard() {
+  const box = $("#d-lineup"), d = state.selected, info = dayInfo(parseYmd(d));
+  const m = /^(B\d)日\/(B\d)夜$/.exec(info.bCycle || ""), lu = info.role === "duty" && m ? lineupOn(d) : null;
+  if (!lu) { box.innerHTML = ""; return; }
+  const me = state.identity.name, nm = x => (x === me ? `<span class="me">${esc(x)}</span>` : esc(x));
+  const col = (T, label) => {
+    const R = lu[T];
+    const head = `<div class="lu-t">${label}　${T} 小隊</div>`;
+    if (!R) return `<div class="lu-col">${head}<div class="hint">還沒設定值班順序</div></div>`;
+    const rows = [["值班", R.duty ? nm(R.duty) : "（未排）", "duty"], ["大備", R.standby ? nm(R.standby) : "—", ""],
+                  ["二備", R.backups.length ? R.backups.map(nm).join("、") : "—", ""]];
+    if (R.keeper && !R.keeperAway) rows.push(["械管", nm(R.keeper), ""]);
+    if (R.away.length) rows.push(["請假", R.away.map(([n, v]) => `${nm(n)} ${esc(v)}`).join("、"), "away"]);
+    const note = R.manual ? "✎ 這天有手動指定" : R.skipped && R.duty ? `${R.skipped}請假，由${R.duty}遞補` : "";
+    return `<div class="lu-col">${head}` + rows.map(([k, v, c]) => `<div class="lu-r${c ? " " + c : ""}"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("") +
+      (note ? `<div class="lu-note">${esc(note)}</div>` : "") + `</div>`;
+  };
+  box.innerHTML = `<div class="lu-head">👮 值班人員<button class="lnk" type="button" id="d-lu-order">⚙ 值班順序</button></div>` +
+    `<div class="lu-grid">${col(m[1], "☀ 日班")}${col(m[2], "🌙 夜班")}</div>`;
+  $("#d-lu-order").onclick = () => openLineup(TEAMS.includes(state.identity.team) ? state.identity.team : m[1], d);
 }
 function loadFields(d) { writeFields(task(d), d); state.snapshot = readFields(); refreshDaySheet(true); }
 const adjustDirty = () => state.openSheet === "day" && !!state.snapshot && JSON.stringify(readFields()) !== JSON.stringify(state.snapshot);
@@ -978,7 +1266,7 @@ function refreshDaySheet(full) {
   $("#d-sub").textContent = `${dt.getFullYear()} 年（民國 ${dt.getFullYear() - 1911} 年）` + (hol ? `・${hol}` : "") + (d === ymd(new Date()) ? "・今天" : "");
   $("#d-meta").textContent = norm(t.updatedAt) ? `最後修改：${norm(t.updatedBy) || "（未具名）"}・${norm(t.updatedAt)}` : "";
   $("#d-default").textContent = "預設　" + describe(dayInfo(dt, {}));
-  $("#d-result").textContent = ADJUST_KEYS.some(k => f[k]) ? "調整後　" + describe(dayInfo(dt, f)) : "沒有手動調整，依預設";
+  $("#d-result").textContent = BASE_ADJUST_KEYS.some(k => f[k]) ? "調整後　" + describe(dayInfo(dt, f)) : "沒有手動調整，依預設";
   const aDirty = adjustDirty();
   $("#d-dirty").textContent = aDirty ? "● 有修改尚未儲存" : "";
   // 收起來的「調整這天」標題列，簡短顯示目前狀態
@@ -991,7 +1279,7 @@ function refreshDaySheet(full) {
   $("#d-adj-sub").textContent = parts.length ? parts.join("・") : "上班／休假・換班・人員請假";
   $("#d-adj-sub").classList.toggle("adj", aDirty || adjusted);
   $("#day-sheet .foot").classList.toggle("hide", !($("#d-adjust").open || aDirty));
-  if (full) { renderLeaves(); renderEntries(); }
+  if (full) { renderLeaves(); renderEntries(); renderLineupCard(); }
 }
 
 // ---------- 案件／記事清單 ----------
@@ -1135,6 +1423,7 @@ async function confirmDiscard() {
 }
 function resetFields() {
   segSet($("#d-status"), "預設"); $("#d-reason").value = ""; $("#d-duty").value = ""; $("#d-b").value = "";
+  $("#d-lu-sel").querySelectorAll("select").forEach(el => { el.value = ""; });
   refreshDaySheet(false);
 }
 
@@ -1161,7 +1450,7 @@ async function saveDay() {
   try {
     server = (await fb("GET", `/${d}`)) || {};
     if (typeof server !== "object") server = {};
-    const conflicts = Object.keys(changed).filter(k => { const s = norm(server[k]); return s !== (orig[k] || "") && s !== vals[k]; });
+    const conflicts = Object.keys(changed).filter(k => { const s = norm(getPath(server, k)); return s !== (orig[k] || "") && s !== vals[k]; });
     if (conflicts.length) {
       const who = norm(server.updatedBy) || "同事", when = norm(server.updatedAt);
       const ans = await ask("同事剛改過這天",
@@ -1202,7 +1491,7 @@ function applyLocal(d, changes) {
 async function applyPatch(dates, changes, doneMsg) {
   if (!dates.length) return false;
   if (!state.online) { alertBox("離線模式", "目前離線，無法修改。"); return false; }
-  const touchesForm = Object.keys(changes).some(k => FORM_KEYS.includes(k.split("/")[0]));
+  const touchesForm = Object.keys(changes).some(k => FORM_KEYS.some(f => f.split("/")[0] === k.split("/")[0]));
   if (touchesForm && state.openSheet === "day" && dates.includes(state.selected) && !(await confirmDiscard())) return false;
   const meta = { updatedBy: state.identity.name || "未具名", updatedAt: nowStr() }, body = {};
   for (const d of dates) {
@@ -1295,6 +1584,187 @@ async function resetBatch() {
 }
 
 // ==========================================
+// 👮 值班人員順序：編輯畫面
+// ==========================================
+const mdw = d => { const x = typeof d === "string" ? parseYmd(d) : d; return `${x.getMonth() + 1}/${x.getDate()}（${WD[x.getDay()]}）`; };
+/** 本隊值班日（含換班），from～to */
+function dutyDaysBetween(from, to) {
+  const out = [];
+  for (let d = from; d <= to; d = addDays(d, 1)) if (dayInfo(d).role === "duty") out.push(ymd(d));
+  return out;
+}
+const periodAt = (T, d, lineup) => { let p = null; for (const x of (lineup || state.lineup)[T].periods) if (x.start <= d) p = x; return p; };
+const periodText = p => `${p.order.join(" → ") || "（沒有人）"}` + (p.backup.length ? `；二備 ${p.backup.join("、")}` : "") + (p.keeper ? `｜械管 ${p.keeper}` : "");
+
+function openLineup(team, fromDate) {
+  const today = ymd(new Date());
+  state.lu = { team: TEAMS.includes(team) ? team : "B1", start: "", draft: null, dirty: false };
+  const days = dutyDaysBetween(addDays(new Date(), -1), addDays(new Date(), 90));
+  const want = fromDate && dayInfo(parseYmd(fromDate)).role === "duty" ? fromDate : (days.find(d => d >= today) || days[0] || today);
+  luSetStart(want);
+  openSheet("lineup");
+  applyOnlineState();
+  $("#lineup-sheet .body").scrollTop = 0;
+}
+function luLoadDraft() {
+  const L = state.lu, p = periodAt(L.team, L.start);
+  L.draft = p ? { order: p.order.slice(), backup: p.backup.slice(), keeper: p.keeper, first: p.start === L.start ? p.first : "" }
+              : { order: [], backup: [], keeper: "", first: "" };
+  L.dirty = false;
+}
+function luSetStart(d) { state.lu.start = d; if (!state.lu.dirty) luLoadDraft(); renderLineupEditor(); }
+/** 把草稿套進輪序（還沒存），給預覽用 */
+function luDraftLineup() {
+  const L = state.lu, lu = clone(state.lineup);
+  const ps = lu[L.team].periods.filter(p => p.start !== L.start);
+  ps.push({ start: L.start, order: L.draft.order.slice(), backup: L.draft.backup.slice(), keeper: L.draft.keeper, first: L.draft.first });
+  lu[L.team] = parseLineupTeam({ periods: ps });
+  return lu;
+}
+function renderLineupEditor() {
+  const L = state.lu, T = L.team, D = L.draft, today = ymd(new Date());
+  $("#l-team").innerHTML = TEAMS.map(t => `<button type="button" data-v="${t}" class="${t === T ? "on" : ""}">${t} 小隊</button>`).join("");
+  // 目前的順序
+  const cur = periodAt(T, today) || state.lineup[T].periods[0];
+  $("#l-now").innerHTML = cur ? `<b>目前（${mdw(cur.start)}起）</b><br>${esc(periodText(cur))}` : "還沒有設定順序。";
+  // 生效日：前後的本隊值班日
+  const ps = state.lineup[T].periods, from = parseYmd(ps.length && ps[0].start < ymd(addDays(new Date(), -60)) ? ymd(addDays(new Date(), -60)) : (ps[0] ? ps[0].start : today));
+  const days = dutyDaysBetween(from, addDays(new Date(), 180));
+  if (!days.includes(L.start)) days.push(L.start), days.sort();
+  const next = days.find(d => d >= today);
+  $("#l-start").innerHTML = days.map(d => `<option value="${d}"${d === L.start ? " selected" : ""}>${mdw(d)}${d === next ? "・下一次" : ""}${ps.some(p => p.start === d) ? "・已有變更" : ""}${d < today ? "・已過" : ""}</option>`).join("");
+  $("#l-start-hint").textContent = ps.some(p => p.start === L.start) ? "這天已有一筆變更，儲存會取代它。" : `從 ${mdw(L.start)} 起改用下面的名單，之前的日子不受影響。`;
+  // 順序清單
+  const ro = !state.online;
+  $("#l-order").innerHTML = D.order.length ? D.order.map((n, i) => `<div class="lrow"><span class="no">${i + 1}</span><span class="nm">${esc(n)}</span>` +
+    `<button class="ib" data-up="${i}" ${i === 0 || ro ? "disabled" : ""} aria-label="上移">↑</button><button class="ib" data-dn="${i}" ${i === D.order.length - 1 || ro ? "disabled" : ""} aria-label="下移">↓</button>` +
+    `<button class="mini" data-bk="${i}" ${ro ? "disabled" : ""}>改二備</button><button class="ib" data-rm="${i}" ${ro ? "disabled" : ""} aria-label="移除">✕</button></div>`).join("")
+    : `<div class="hint">還沒有人，請在下方加入。</div>`;
+  $("#l-backup").innerHTML = D.backup.length ? D.backup.map((n, i) => `<div class="lrow"><span class="nm">${esc(n)}</span>` +
+    `<button class="mini" data-in="${i}" ${ro ? "disabled" : ""}>排進輪值</button><button class="ib" data-rmb="${i}" ${ro ? "disabled" : ""} aria-label="移除">✕</button></div>`).join("")
+    : `<div class="hint">（無）新人到隊還不排值班時放這裡。</div>`;
+  if (document.activeElement !== $("#l-keeper")) $("#l-keeper").value = D.keeper;
+  // 那天由誰值班
+  const auto = luDraftLineup(); auto[T].periods.forEach(p => { if (p.start === L.start) p.first = ""; });
+  const autoR = (lineupMap(L.start, auto).get(L.start) || {})[T];
+  $("#l-first").innerHTML = `<option value="">照順序接下去（${esc(autoR && autoR.autoDuty ? autoR.autoDuty : "—")}）</option>` +
+    D.order.map(n => `<option${n === D.first ? " selected" : ""}>${esc(n)}</option>`).join("");
+  // 預覽
+  const lu = luDraftLineup(), pv = dutyDaysBetween(parseYmd(L.start), addDays(parseYmd(L.start), 75)).slice(0, 6);
+  const map = pv.length ? lineupMap(pv[pv.length - 1], lu) : new Map();
+  $("#l-preview").innerHTML = pv.map(d => {
+    const R = (map.get(d) || {})[T];
+    if (!R) return "";
+    const away = R.away.length ? `・<span style="color:var(--off-fg)">請假 ${esc(R.away.map(a => a[0]).join("、"))}</span>` : "";
+    return `<div class="lpv"><span class="d">${mdw(d)}${R.shift ? " " + R.shift : ""}</span>值班 <b>${esc(R.duty || "未排")}</b>・大備 ${esc(R.standby || "—")}` +
+      (R.backups.length ? `・二備 ${esc(R.backups.join("、"))}` : "") + away + `</div>`;
+  }).join("") || `<div class="hint">接下來沒有本隊值班日。</div>`;
+  // 變更紀錄
+  $("#l-history").innerHTML = ps.length ? ps.slice().reverse().map(p => `<div class="lhist${p.start === L.start ? " cur" : ""}" data-go="${p.start}">` +
+    `<span class="t"><b>${mdw(p.start)}起</b>${p.first ? `（由 ${esc(p.first)} 值班）` : ""}<br>${esc(periodText(p))}</span>` +
+    `<button class="ib" data-del="${p.start}" ${ro ? "disabled" : ""} aria-label="刪除" style="border:0;background:transparent;color:var(--muted);font-size:16px;width:34px;height:34px;cursor:pointer">✕</button></div>`).join("")
+    : `<div class="hint">（還沒有）</div>`;
+  $("#l-dirty").textContent = L.dirty ? "● 尚未儲存" : "";
+}
+function luEdit(fn) { fn(state.lu.draft); state.lu.dirty = true; renderLineupEditor(); }
+function luAddName(name) {
+  name = String(name || "").trim();
+  if (!name) return;
+  luEdit(D => {
+    D.backup = D.backup.filter(n => n !== name);
+    if (D.keeper === name) D.keeper = "";
+    if (!D.order.includes(name)) D.order.push(name);
+  });
+  $("#l-add").value = "";
+}
+async function writeLineupTeam(T, periods, doneMsg) {
+  if (!state.online) { alertBox("離線模式", "目前離線，無法修改。"); return false; }
+  state.busy++;
+  try {
+    const body = { [`lineup/${T}`]: lineupTeamForCloud({ periods }), "lineup/updatedBy": state.identity.name || "未具名", "lineup/updatedAt": nowStr() };
+    await fb("PATCH", "", SETTINGS_URL, body);
+    state.lineup = Object.assign({}, state.lineup, { [T]: parseLineupTeam({ periods }) });
+    lsSet(LS.lineup, state.lineup);
+  } catch (e) { handleError(e, "儲存失敗"); return false; }
+  finally { state.busy--; }
+  renderAll();
+  toast(`✔ ${doneMsg}`); setStatus(`✔ ${doneMsg}（${hhmm()}）`);
+  return true;
+}
+/** 先抓雲端最新的，再換掉（或刪掉）那一天的變更，避免蓋掉同事剛改的其他筆 */
+async function latestPeriods(T) {
+  const cloud = await fb("GET", `/lineup/${T}`, SETTINGS_URL);
+  return parseLineupTeam(cloud && typeof cloud === "object" ? cloud : DEFAULT_LINEUP[T]).periods;
+}
+async function saveLineup() {
+  const L = state.lu, D = L.draft;
+  if (!D.order.length) { alertBox("順序是空的", "至少要有一個人排進值班順序。"); return false; }
+  let ps;
+  try { ps = await latestPeriods(L.team); } catch (e) { handleError(e, "儲存失敗"); return false; }
+  ps = ps.filter(p => p.start !== L.start).concat([{ start: L.start, order: D.order, backup: D.backup, keeper: D.keeper.trim(), first: D.first }]);
+  const ok = await writeLineupTeam(L.team, parseLineupTeam({ periods: ps }).periods, `${L.team} 值班順序已更新（${mdw(L.start)}起）`);
+  if (ok) { L.dirty = false; luLoadDraft(); renderLineupEditor(); }
+  return ok;
+}
+async function deletePeriod(start) {
+  const T = state.lu.team;
+  if (!(await confirmBox("刪除這筆變更", `刪除 ${T} 小隊「${mdw(start)}起」的順序變更？那天之後會沿用前一筆的名單。`, "刪除", true))) return;
+  let ps;
+  try { ps = await latestPeriods(T); } catch (e) { handleError(e, "刪除失敗"); return; }
+  if (await writeLineupTeam(T, ps.filter(p => p.start !== start), `已刪除 ${mdw(start)} 的變更`)) {
+    state.lu.dirty = false; luLoadDraft(); renderLineupEditor();
+  }
+}
+async function confirmLineupDiscard() {
+  if (!state.lu || !state.lu.dirty) return true;
+  const ans = await ask("尚未儲存", "值班順序改了還沒儲存。", [["cancel", "取消", ""], ["discard", "不要了", "danger"], ["save", "儲存", "primary"]]);
+  if (ans === "cancel") return false;
+  if (ans === "save") return await saveLineup();
+  state.lu.dirty = false;
+  return true;
+}
+function setupLineupEvents() {
+  $("#s-lineup").onclick = () => openLineup(state.identity.team);
+  $("#l-team").addEventListener("click", async e => {
+    const b = e.target.closest("button"); if (!b || b.dataset.v === state.lu.team) return;
+    if (!(await confirmLineupDiscard())) return;
+    state.lu.team = b.dataset.v; state.lu.dirty = false; luLoadDraft(); renderLineupEditor();
+  });
+  $("#l-start").onchange = e => luSetStart(e.target.value);
+  $("#l-order").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b || b.disabled) return;
+    const ds = b.dataset;
+    if (ds.up) luEdit(D => { const i = +ds.up; [D.order[i - 1], D.order[i]] = [D.order[i], D.order[i - 1]]; });
+    else if (ds.dn) luEdit(D => { const i = +ds.dn; [D.order[i + 1], D.order[i]] = [D.order[i], D.order[i + 1]]; });
+    else if (ds.bk) luEdit(D => { const [n] = D.order.splice(+ds.bk, 1); D.backup.push(n); if (D.first === n) D.first = ""; });
+    else if (ds.rm) luEdit(D => { const [n] = D.order.splice(+ds.rm, 1); if (D.first === n) D.first = ""; });
+  });
+  $("#l-backup").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b || b.disabled) return;
+    if (b.dataset.in) luEdit(D => { const [n] = D.backup.splice(+b.dataset.in, 1); D.order.push(n); });
+    else if (b.dataset.rmb) luEdit(D => { D.backup.splice(+b.dataset.rmb, 1); });
+  });
+  $("#l-add-btn").onclick = () => luAddName($("#l-add").value);
+  $("#l-add").addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); luAddName($("#l-add").value); } });
+  $("#l-keeper").addEventListener("change", e => luEdit(D => {
+    const n = e.target.value.trim();
+    D.keeper = n; D.order = D.order.filter(x => x !== n); D.backup = D.backup.filter(x => x !== n);
+    if (D.first === n) D.first = "";
+  }));
+  $("#l-first").onchange = e => luEdit(D => { D.first = e.target.value; });
+  $("#l-history").addEventListener("click", async e => {
+    const del = e.target.closest("[data-del]");
+    if (del) { if (!del.disabled) await deletePeriod(del.dataset.del); return; }
+    const row = e.target.closest("[data-go]");
+    if (!row || row.dataset.go === state.lu.start) return;
+    if (!(await confirmLineupDiscard())) return;
+    state.lu.dirty = false; luSetStart(row.dataset.go);
+    $("#lineup-sheet .body").scrollTop = 0;
+  });
+  $("#l-save").onclick = saveLineup;
+}
+
+// ==========================================
 // 🔄 同步與離線
 // ==========================================
 function saveCache() { lsSet(LS.tasks, state.tasks); }
@@ -1302,11 +1772,18 @@ async function syncSettings() {
   try {
     const cloud = await fb("GET", "", SETTINGS_URL);
     state.settingsOk = true;
+    let changed = false;
+    if (cloud && typeof cloud === "object") {
+      const lu = parseLineup(cloud.lineup), raw = cloud.lineup && typeof cloud.lineup === "object" ? cloud.lineup : {};
+      state.lineupMeta = { updatedBy: raw.updatedBy || "", updatedAt: raw.updatedAt || "" };
+      if (JSON.stringify(lu) !== JSON.stringify(state.lineup)) { state.lineup = lu; lsSet(LS.lineup, lu); changed = true; }
+    }
     if (cloud && cloud.rules && typeof cloud.rules === "object") {
       state.settingsMeta = { updatedBy: cloud.updatedBy || "", updatedAt: cloud.updatedAt || "" };
       const r = new Rules(cloud.rules);
-      if (JSON.stringify(r.data) !== JSON.stringify(state.rules.data)) { state.rules = r; lsSet(LS.rules, r.data); return true; }
+      if (JSON.stringify(r.data) !== JSON.stringify(state.rules.data)) { state.rules = r; lsSet(LS.rules, r.data); changed = true; }
     }
+    return changed;
   } catch (e) {
     if (e instanceof DbError) state.settingsOk = false;
     else if (e instanceof AuthError) throw e;
@@ -1477,10 +1954,20 @@ function reminderContent(dt, name, team) {
   team = team === undefined ? state.identity.team : normalizeTeam(team);
   const info = dayInfo(dt);
   if (info.role !== "duty") return null;
-  const b = info.bCycle, shift = shiftOf(b, team), m = /^(B\d)日\/(B\d)夜$/.exec(b || "");
-  const main = shift ? `你是 ${team} 小隊：${shift}` : m ? `${m[1]} 日班、${m[2]} 夜班` : "班別未定，請確認";
+  const b = info.bCycle, m = /^(B\d)日\/(B\d)夜$/.exec(b || "");
+  const lu = lineupOn(ymd(dt)), mine = myRole(lu, name);
+  if (mine && mine.role !== "請假") team = mine.team;          // 輪序名單裡有這個人：以名單的小隊為準
+  const shift = shiftOf(b, team);
+  let main = shift ? `你是 ${team} 小隊：${shift}` : m ? `${m[1]} 日班、${m[2]} 夜班` : "班別未定，請確認";
+  if (mine && mine.role !== "請假") main += `・${mine.role}`;
+  const crew = [];
+  if (lu && m) for (const [T, sname] of [[m[1], "日班"], [m[2], "夜班"]]) {
+    const R = lu[T];
+    if (R) crew.push(`${sname} ${T}：值班 ${R.duty || "未排"}・大備 ${R.standby || "—"}`);
+  }
   const leave = name ? leavesOf(info.task)[name] : "";
-  return { main, b, shift, label: info.label, note: leave ? `你已登記這天「${leave}」，記得確認代班。` : "" };
+  return { main, b, shift, role: mine ? mine.role : "", crew, label: info.label,
+           note: leave ? `你已登記這天「${leave}」，記得確認代班。` : "" };
 }
 function nextDutyDay(from) {
   let d = addDays(from || new Date(), 1);
@@ -1506,6 +1993,7 @@ function showReminder(dt, c, preview, now) {
   const when = ymd(dt) === ymd(addDays(today, 1)) ? "明天 " : "";
   const html = `<div style="font-size:19px;font-weight:800;margin-top:6px">${when}${fmtMD(dt)} ${esc(state.rules.my)}值班</div>
     <div class="remind-box"><div class="big">${esc(c.main)}</div>${c.b ? `<div style="font-size:13px;margin-top:2px">班別：${esc(c.b)}</div>` : ""}</div>
+    ${(c.crew || []).length ? `<div style="margin-top:8px;font-size:14px;line-height:1.6">${c.crew.map(esc).join("<br>")}</div>` : ""}
     ${c.label ? `<div style="margin-top:8px;font-size:14px">備註：${esc(c.label)}</div>` : ""}
     ${c.note ? `<div style="margin-top:8px;font-size:14px;color:var(--off-fg)">${esc(c.note)}</div>` : ""}`;
   if (!preview && navigator.vibrate) { try { navigator.vibrate([200, 100, 200]); } catch (e) {} }
@@ -1524,8 +2012,9 @@ function exportIcs() {
   for (let i = 1; i <= 120; i++) {
     const d = addDays(new Date(), i), info = dayInfo(d);
     if (info.role !== "duty") continue;
-    const shift = shiftOf(info.bCycle, id.team);
-    const summary = `${state.rules.my}值班` + (shift ? `（${shift}）` : info.bCycle ? `（${info.bCycle}）` : "");
+    const c = reminderContent(d) || {};
+    const shift = c.shift || shiftOf(info.bCycle, id.team), role = c.role && c.role !== "請假" ? c.role : "";
+    const summary = `${state.rules.my}值班` + (shift ? `（${shift}${role ? "・" + role : ""}）` : info.bCycle ? `（${info.bCycle}）` : "");
     const ds = ymd(d).replace(/-/g, ""), de = ymd(addDays(d, 1)).replace(/-/g, "");
     L.push("BEGIN:VEVENT", `UID:duty-${ds}-${hash}@duty-calendar`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${ds}`,
            `DTEND;VALUE=DATE:${de}`, `SUMMARY:${summary}`, `DESCRIPTION:班別：${info.bCycle || "未定"}`,
@@ -1628,6 +2117,7 @@ function setupEvents() {
     openSheet("settings");
   };
   $("#backdrop").onclick = () => closeSheet();
+  setupLineupEvents();
   document.querySelectorAll(".sheet").forEach(enableSwipeClose);
   document.querySelectorAll("[data-close]").forEach(b => b.onclick = () => closeSheet());
   $("#theme-sel").onchange = e => { document.documentElement.setAttribute("data-theme", e.target.value); try { localStorage.setItem(LS.theme, e.target.value); } catch (err) {} };
@@ -1711,6 +2201,3 @@ startup();
 </script>
 </body>
 </html>
-
-
-
