@@ -73,7 +73,7 @@
   .btn.ghost { background: var(--surface); }
   .btn:disabled { opacity: .45; cursor: default; }
   .btn.block { width: 100%; }
-  input[type=text], input[type=password], select, textarea {
+  input[type=text], input[type=password], input[type=tel], select, textarea {
     width: 100%; background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 10px;
     padding: 10px 11px; font: inherit; font-size: 16px; outline: none; }
   input:focus, select:focus, textarea:focus { border-color: var(--accent); }
@@ -267,6 +267,22 @@
   .login { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 26px 22px; width: min(380px, 100%); }
   .login h2 { margin: 0; font-size: 24px; }
   .login .err { color: var(--off-fg); font-size: 13.5px; min-height: 18px; margin-top: 8px; white-space: pre-line; }
+  details.legacy { margin-top: 18px; border-top: 1px solid var(--border); padding-top: 10px; }
+  details.legacy summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+  .banner.click { cursor: pointer; }
+  /* 管理後台 */
+  .adm-new { background: var(--duty-bg); border: 1px solid var(--duty-fg); border-radius: 12px; padding: 12px; margin-top: 12px; }
+  .adm-code { font-size: 30px; font-weight: 800; letter-spacing: 3px; color: var(--duty-fg); font-family: ui-monospace, Menlo, Consolas, monospace; margin: 4px 0; }
+  .adm-row { background: var(--surface2); border-radius: 10px; margin-bottom: 6px; }
+  .adm-main { padding: 9px 12px; cursor: pointer; }
+  .adm-n { font-size: 16px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .adm-badge { font-size: 11px; font-weight: 800; background: var(--accent); color: var(--accent-text); border-radius: 6px; padding: 1px 6px; }
+  .adm-ops { padding: 0 10px 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .adm-ops .btn { font-size: 13px; padding: 7px 10px; min-height: 34px; }
+  .adm-dev { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 13px; color: var(--muted);
+    background: var(--surface); border-radius: 8px; padding: 2px 4px 2px 10px; }
+  .adm-dev .ib { border: 0; background: transparent; color: var(--muted); font-size: 16px; width: 34px; height: 34px; cursor: pointer; flex: none; }
+
 </style>
 </head>
 <body>
@@ -276,14 +292,23 @@
 <div id="login" class="center-screen hidden">
   <div class="login">
     <h2 id="login-title">偵二隊行事曆</h2>
-    <div class="hint" style="margin:4px 0 14px">第一次使用請登入，之後會自動連線</div>
-    <div class="sec" style="margin-top:0">帳號</div>
-    <input type="text" id="acc" autocapitalize="off" autocomplete="username" spellcheck="false" placeholder="帳號（不用打 @ntpd.gov.tw）">
-    <div class="sec">密碼</div>
-    <input type="password" id="pwd" autocomplete="current-password" placeholder="密碼">
-    <div class="err" id="login-err"></div>
-    <button class="btn primary block" id="login-btn" style="margin-top:12px;padding:13px">登入</button>
+    <div class="hint" style="margin:4px 0 14px">第一次使用：輸入你的手機號碼和管理者給你的啟用碼。啟用後這支手機會記住你，不用再輸入。</div>
+    <div class="sec" style="margin-top:0">手機號碼</div>
+    <input type="tel" id="act-phone" inputmode="numeric" autocomplete="tel" placeholder="例如 0912345678">
+    <div class="sec">啟用碼</div>
+    <input type="text" id="act-code" autocapitalize="characters" autocomplete="one-time-code" spellcheck="false" placeholder="8 碼，例如 K7M2-9QXA">
+    <div class="err" id="act-err"></div>
+    <button class="btn primary block" id="act-btn" style="margin-top:12px;padding:13px">啟用這支手機</button>
     <button class="btn block hidden" id="offline-btn" style="margin-top:8px">離線開啟（唯讀）</button>
+    <details class="legacy" id="legacy-box">
+      <summary>用舊的共用帳號登入（轉換期間）</summary>
+      <div class="sec">帳號</div>
+      <input type="text" id="acc" autocapitalize="off" autocomplete="username" spellcheck="false" placeholder="帳號（不用打 @ntpd.gov.tw）">
+      <div class="sec">密碼</div>
+      <input type="password" id="pwd" autocomplete="current-password" placeholder="密碼">
+      <div class="err" id="login-err"></div>
+      <button class="btn block" id="login-btn" style="margin-top:10px">登入</button>
+    </details>
   </div>
 </div>
 
@@ -425,6 +450,7 @@
     <label class="chk" style="margin-top:8px"><input type="checkbox" id="show-others"> 格子裡顯示其他隊</label>
     <div class="sec">我的身分與值班提醒</div>
     <button class="btn block" id="s-identity">👤 身分、小隊、提醒時間</button>
+    <button class="btn block hidden" id="s-activate" style="margin-top:8px">🔒 改用個人啟用碼登入</button>
     <button class="btn block" id="s-ics" style="margin-top:8px">📅 匯出值班提醒到手機行事曆</button>
     <div class="hint" style="margin-top:6px">網頁版只有開著時才能跳提醒。匯出到手機行事曆後，就算沒開網頁，前一天也會準時提醒；換班或輪序變動後記得重新匯出。</div>
     <div class="sec">值班人員</div>
@@ -433,7 +459,20 @@
     <div class="sec">輪值規則</div>
     <div class="hint" id="s-rules"></div>
     <div class="sec">帳號</div>
+    <button class="btn block hidden" id="s-admin" style="margin-bottom:8px">🛡 管理後台</button>
     <button class="btn danger block" id="s-logout">登出這支手機</button>
+    <div class="hint" id="s-acct" style="margin-top:6px"></div>
+  </div>
+</div>
+
+<!-- 管理後台 -->
+<div class="sheet" id="admin-sheet" aria-hidden="true">
+  <div class="grab"></div>
+  <div class="body">
+    <div class="sh-head"><div style="min-width:0"><div class="sh-title">🛡 管理後台</div>
+      <div class="sh-sub">新增同仁、產生啟用碼；人員調走時在這裡移除，他就看不到行事曆。</div></div>
+      <button class="x" data-close="admin" aria-label="關閉">✕</button></div>
+    <div id="adm-body"></div>
   </div>
 </div>
 
@@ -494,7 +533,8 @@ const API_KEY = "AIzaSyAJdTuKBRpj2So4QPyCllHc0ucva4qx5g8";   // Firebase Web API
 const EMAIL_DOMAIN = "@ntpd.gov.tw";
 const HTTP_TIMEOUT = 12000, POLL_MS = 60000, REMIND_CHECK_MS = 30000, SETTINGS_POLL_EVERY = 3;
 const LS = { theme: "duty_app_theme", refresh: "duty_app_refresh", account: "duty_app_account", identity: "duty_identity",
-             tasks: "duty_cache_tasks", rules: "duty_cache_rules", others: "duty_show_others", lineup: "duty_cache_lineup" };
+             tasks: "duty_cache_tasks", rules: "duty_cache_rules", others: "duty_show_others", lineup: "duty_cache_lineup",
+             mode: "duty_auth_mode", uid: "duty_auth_uid", phone: "duty_device_phone", profile: "duty_profile", legacyClosed: "duty_legacy_closed" };
 
 const THEME_NAMES = { default: "🚓 經典暗黑", minimal: "☕ 無印文青", nature: "🏕 自然原木", ocean: "🌊 休閒海洋", minecraft: "🧱 麥塊像素" };
 const WD = "日一二三四五六";
@@ -820,6 +860,8 @@ const state = {
   month: (() => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), 1); })(),
   selected: ymd(new Date()), multiMode: false, multi: new Set(), snapshot: null, openSheet: null,
   identity: lsGet(LS.identity, {}) || {},
+  uid: lsGet(LS.uid, "") || "", profile: lsGet(LS.profile, null), adm: null, setupDone: null,
+  mode: localStorage.getItem(LS.mode) || (localStorage.getItem(LS.refresh) ? "legacy" : ""),
   showOthers: lsGet(LS.others, false),
 };
 if (typeof state.tasks !== "object" || Array.isArray(state.tasks)) state.tasks = {};
@@ -851,8 +893,10 @@ async function authErrorText(res) {
     return AUTH_TEXT[code] || `登入失敗（${msg || res.status}）`;
   } catch (e) { return `登入失敗（${res.status}）`; }
 }
-function setTokens(id, refresh, expiresIn) {
+function setTokens(id, refresh, expiresIn, uid) {
   state.idToken = id;
+  uid = uid || uidFromToken(id);
+  if (uid) { state.uid = uid; lsSet(LS.uid, uid); }
   state.tokenExpiry = Date.now() + (parseInt(expiresIn || "3600", 10) - 300) * 1000;
   if (refresh) { state.refreshToken = refresh; try { localStorage.setItem(LS.refresh, refresh); } catch (e) {} }
 }
@@ -862,7 +906,7 @@ async function signIn(email, password) {
     body: JSON.stringify({ email, password, returnSecureToken: true }) });
   if (!res.ok) { if (res.status >= 500) throw new NetError(`伺服器錯誤（${res.status}）`); throw new AuthError(await authErrorText(res)); }
   const d = await res.json();
-  setTokens(d.idToken, d.refreshToken, d.expiresIn);
+  setTokens(d.idToken, d.refreshToken, d.expiresIn, d.localId);
 }
 async function refreshId() {
   if (!state.refreshToken) throw new AuthError("請先登入");
@@ -872,7 +916,7 @@ async function refreshId() {
   if ([400, 401, 403].includes(res.status)) throw new AuthError(await authErrorText(res));
   if (!res.ok) throw new NetError(`伺服器錯誤（${res.status}）`);
   const d = await res.json();
-  setTokens(d.id_token, d.refresh_token, d.expires_in);
+  setTokens(d.id_token, d.refresh_token, d.expires_in, d.user_id);
 }
 /** 所有資料庫請求都走這裡：token 過期自動續期、檢查回應。 */
 async function fb(method, path = "", root = TASKS_URL, body) {
@@ -1046,7 +1090,7 @@ function renderCalendar() {
 }
 function renderTools() {
   const id = state.identity;
-  $("#me-btn").textContent = id.name ? `👤 ${id.name}・${id.team || "隊部"}` : "👤 選擇身分";
+  $("#me-btn").textContent = id.name ? `👤 ${displayName()}・${id.team || "隊部"}` : "👤 選擇身分";
   $("#multi-btn").classList.toggle("on", state.multiMode);
   $("#multi-btn").textContent = state.multiMode ? "☑ 多選中" : "☑ 多選";
   const names = leaveNames();
@@ -1077,7 +1121,7 @@ function applyOnlineState() {
 // 📲 面板開關
 // ==========================================
 function openSheet(name) {
-  for (const s of ["day", "batch", "settings", "lineup"]) {
+  for (const s of ["day", "batch", "settings", "lineup", "admin"]) {
     $(`#${s}-sheet`).classList.toggle("show", s === name);
     $(`#${s}-sheet`).setAttribute("aria-hidden", s === name ? "false" : "true");
   }
@@ -1795,20 +1839,27 @@ async function loadAll(manual) {
   if (manual) setStatus("同步中…");
   state.busy++;
   try {
+    if (state.mode === "device") await loadProfile();
     const data = await fb("GET");
     state.tasks = data && typeof data === "object" ? data : {};
     saveCache();
     state.online = true;
     await syncSettings();
+    if (state.mode === "legacy") {
+      try { const a = await fb("GET", "/admins", ROOT_URL); state.setupDone = !!(a && (a.a1 || a.a2)); }
+      catch (err) { state.setupDone = false; }
+    }
   } catch (e) {
     state.busy--;
+    if (e instanceof RevokedError) { handleRevoked(e.message); return; }
     if (e instanceof AuthError) { authLost(e.message); return; }
+    if (e instanceof DbError && (await explainDenied(e))) return;
     goOffline(e.message, true);
     return;
   }
   state.busy--;
   applyOnlineState();
-  setBanner(state.settingsOk ? "" : "⚠ 雲端規則無法讀取（Firebase Rules 需要開放 dutySettings），目前用內建規則。");
+  showAccessBanner();
   if (state.openSheet === "day" && !isDirty()) loadFields(state.selected);
   renderAll();
   setStatus(`✔ 已同步（${hhmm()}）`);
@@ -1823,6 +1874,7 @@ async function refreshFromCloud() {
   catch (e) {
     state.busy--;
     if (e instanceof AuthError) { authLost(e.message); return; }
+    if (e instanceof DbError && (await explainDenied(e))) return;
     if (wasOnline) setStatus(`⚠ 自動更新失敗（${hhmm()}），稍後再試`);
     return;
   }
@@ -1842,6 +1894,15 @@ async function refreshFromCloud() {
   else if (rulesChanged) setStatus(`↻ ${state.settingsMeta.updatedBy || "同事"}更新了規則（${hhmm()}）`);
   else if (changed) setStatus(`↻ 已更新同事的修改（${hhmm()}）`);
 }
+function showAccessBanner() {
+  const b = $("#banner"); b.classList.remove("click"); b.onclick = null;
+  if (state.mode === "legacy" && state.setupDone) {
+    setBanner("🔒 行事曆改用個人帳號了：向管理者索取啟用碼後，點這裡啟用這支手機（不用再輸入密碼）。");
+    b.classList.add("click"); b.onclick = () => openActivate();
+    return;
+  }
+  setBanner(state.settingsOk ? "" : "⚠ 雲端規則無法讀取（Firebase Rules 需要開放 dutySettings），目前用內建規則。");
+}
 function goOffline(reason, alertUser) {
   state.online = false;
   applyOnlineState();
@@ -1852,8 +1913,8 @@ function goOffline(reason, alertUser) {
   afterMainReady();
 }
 function authLost(msg) {
-  try { localStorage.removeItem(LS.refresh); } catch (e) {}
-  state.refreshToken = ""; state.idToken = ""; state.tokenExpiry = 0; state.online = false;
+  for (const k of [LS.refresh, LS.mode, LS.uid, LS.profile]) { try { localStorage.removeItem(k); } catch (e) {} }
+  state.refreshToken = ""; state.idToken = ""; state.tokenExpiry = 0; state.online = false; state.mode = ""; state.uid = ""; state.profile = null;
   showLogin(msg);
 }
 
@@ -1862,6 +1923,7 @@ function authLost(msg) {
 // ==========================================
 function saveIdentity() { lsSet(LS.identity, state.identity); }
 function openIdentity(first) {
+  if (state.mode === "device") return openProfile();
   const roster = state.rules.roster.slice(), id = state.identity;
   const NEW = "__new";
   const known = id.name || "";
@@ -2031,6 +2093,472 @@ function exportIcs() {
   toast(`已匯出 ${n} 個值班日（前一天 ${hour}:00 提醒）`);
 }
 
+/** 產生 Firebase Realtime Database 規則（方案二：手機號碼＋啟用碼）。sharedUid＝原本共用帳號的 UID，ownerPhone＝第一位管理者。 */
+function buildRules(sharedUid, ownerPhone) {
+  const uid = String(sharedUid || "").replace(/[^A-Za-z0-9_-]/g, ""), owner = String(ownerPhone || "").replace(/\D/g, "");
+  const DEV = "root.child('devices').child(auth.uid)";
+  const PH = `${DEV}.child('phone').val()`;
+  const HAS = `${DEV}.child('phone').isString()`;
+  const STAFF = `(auth != null && ${HAS} && root.child('staff').child(${PH}).exists())`;
+  const ADM = `(${STAFF} && (root.child('admins').child('a1').val() === ${PH} || root.child('admins').child('a2').val() === ${PH}))`;
+  const LEGACY = `(auth != null && auth.uid === '${uid}' && root.child('access').child('legacy').val() !== false)`;
+  const BOOT = `(auth != null && auth.uid === '${uid}' && !root.child('admins').exists())`;
+  const MEMBER = `${LEGACY} || ${STAFF}`, ADMIN = `${BOOT} || ${ADM}`;
+  const SELF = v => `auth != null && ${HAS} && ${PH} === ${v}`;
+  const INV = "root.child('invites').child(newData.child('phone').val())";
+  return JSON.stringify({ rules: {
+    tasks: { ".read": MEMBER, ".write": MEMBER },
+    dutySettings: { ".read": MEMBER, ".write": MEMBER },
+    staff: {
+      ".read": ADMIN, ".write": ADMIN,
+      "$phone": {
+        ".read": SELF("$phone"),
+        name: { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 20" },
+        team: { ".validate": "newData.isString() && newData.val().length <= 4" },
+        nick: { ".write": `${SELF("$phone")} && root.child('staff').child($phone).exists()`,
+                ".validate": "newData.isString() && newData.val().length <= 12" },
+      },
+    },
+    invites: { ".read": ADMIN, ".write": ADMIN },
+    devices: {
+      ".read": ADMIN, ".write": ADMIN,
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": `auth != null && auth.uid === $uid && !data.exists() && newData.child('phone').isString() && newData.child('code').isString() && root.child('staff').child(newData.child('phone').val()).exists() && ${INV}.child('code').val() === newData.child('code').val() && ${INV}.child('exp').val() > now`,
+        seen: { ".write": "auth != null && auth.uid === $uid && data.parent().exists()", ".validate": "newData.isString() && newData.val().length <= 10" },
+      },
+    },
+    admins: {
+      ".read": MEMBER, ".write": ADMIN,
+      a1: { ".validate": `newData.isString() && (root.child('admins').exists() || newData.val() === '${owner}')` },
+      a2: { ".validate": "newData.isString()" },
+      "$other": { ".validate": false },
+    },
+    access: {
+      ".read": "auth != null", ".write": ADMIN,
+      legacy: { ".validate": "newData.isBoolean()" },
+      legacyUid: { ".validate": "newData.isString()" },
+      "$other": { ".validate": false },
+    },
+  } }, null, 2);
+}
+
+// ==========================================
+// 🔐 個人帳號（手機號碼＋啟用碼）與管理後台
+//   每支手機用自己的匿名身分登入 Firebase，再用管理者給的啟用碼「綁定」到同仁的手機號碼。
+//   調走時管理者刪掉號碼 → 資料庫規則立刻擋掉，那支手機就讀不到任何資料。
+// ==========================================
+class RevokedError extends Error {}
+const ROOT_URL = FIREBASE_ROOT;
+const CODE_DAYS = 7, CODE_ALPHA = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+const normPhone = s => { let d = String(s || "").replace(/\D/g, ""); if (d.startsWith("886")) d = "0" + d.slice(3); return d; };
+const validPhone = p => /^0\d{8,9}$/.test(p);
+const maskPhone = p => (p && p.length >= 7 ? `${p.slice(0, 4)}***${p.slice(-3)}` : p || "");
+const normCode = s => String(s || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
+const fmtCode = c => (c && c.length === 8 ? `${c.slice(0, 4)}-${c.slice(4)}` : c || "");
+function genCode() {
+  const a = new Uint32Array(8); crypto.getRandomValues(a);
+  return Array.from(a, x => CODE_ALPHA[x % CODE_ALPHA.length]).join("");
+}
+function deviceLabel() {
+  const u = navigator.userAgent || "";
+  const os = /iPhone|iPad/.test(u) ? "iPhone" : /Android/.test(u) ? "Android" : /Windows/.test(u) ? "Windows" : /Mac/.test(u) ? "Mac" : "其他";
+  const br = /Edg\//.test(u) ? "Edge" : /CriOS|Chrome\//.test(u) ? "Chrome" : /Firefox|FxiOS/.test(u) ? "Firefox" : /Safari/.test(u) ? "Safari" : "瀏覽器";
+  const pwa = window.matchMedia && window.matchMedia("(display-mode: standalone)").matches ? "（主畫面）" : "";
+  return `${os}・${br}${pwa}`;
+}
+const uidFromToken = t => { try { return JSON.parse(atob(String(t).split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))).user_id || ""; } catch (e) { return ""; } };
+
+async function signUpAnon() {
+  const res = await http(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${API_KEY}`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ returnSecureToken: true }) });
+  if (!res.ok) {
+    if (res.status >= 500) throw new NetError(`伺服器錯誤（${res.status}）`);
+    let msg = ""; try { msg = ((await res.json()).error || {}).message || ""; } catch (e) {}
+    if (/ADMIN_ONLY_OPERATION|OPERATION_NOT_ALLOWED/.test(msg)) throw new AuthError("系統還沒開放啟用（管理者需要在 Firebase 開啟「匿名」登入方式）。");
+    throw new AuthError(`啟用失敗（${msg || res.status}）`);
+  }
+  const d = await res.json();
+  setTokens(d.idToken, d.refreshToken, d.expiresIn, d.localId);
+}
+function setMode(mode) { state.mode = mode; try { if (mode) localStorage.setItem(LS.mode, mode); else localStorage.removeItem(LS.mode); } catch (e) {} }
+
+/** 用手機號碼＋啟用碼綁定這支手機。成功後這支手機就是這位同仁，不用再輸入。 */
+async function activateDevice(phone, code) {
+  phone = normPhone(phone); code = normCode(code);
+  if (!validPhone(phone)) throw new AuthError("手機號碼格式不對（例如 0912345678）");
+  if (code.length !== 8) throw new AuthError("啟用碼是 8 碼英數字（例如 K7M2-9QXA）");
+  const prev = { idToken: state.idToken, refreshToken: state.refreshToken, tokenExpiry: state.tokenExpiry, uid: state.uid, mode: state.mode };
+  const restore = () => {
+    Object.assign(state, prev);
+    try { if (prev.refreshToken) localStorage.setItem(LS.refresh, prev.refreshToken); else localStorage.removeItem(LS.refresh); } catch (e) {}
+    lsSet(LS.uid, prev.uid || ""); setMode(prev.mode || "");
+  };
+  await signUpAnon();
+  try {
+    await fb("PUT", `/devices/${state.uid}`, ROOT_URL, { phone, code, at: nowStr(), label: deviceLabel(), seen: ymd(new Date()) });
+  } catch (e) {
+    restore();
+    if (e instanceof DbError) throw new AuthError("手機號碼或啟用碼不對，或啟用碼已過期。請向管理者重新索取。");
+    throw e;
+  }
+  setMode("device");
+  lsSet(LS.phone, phone);
+  await loadProfile();
+}
+/** 讀自己的資料（姓名、小隊、暱稱、是不是管理者）。被移除時丟出 RevokedError。 */
+async function loadProfile() {
+  const dev = await fb("GET", `/devices/${state.uid}`, ROOT_URL);
+  if (!dev || !dev.phone) throw new RevokedError("這支手機的啟用已被管理者移除，需要時請向管理者索取新的啟用碼。");
+  let st = null;
+  try { st = await fb("GET", `/staff/${dev.phone}`, ROOT_URL); } catch (e) { if (!(e instanceof DbError)) throw e; }
+  if (!st || !st.name) throw new RevokedError("你的帳號已被管理者移除（可能是人員調動）。如有疑問請洽管理者。");
+  let admins = {};
+  try { admins = (await fb("GET", "/admins", ROOT_URL)) || {}; } catch (e) {}
+  state.profile = { phone: dev.phone, name: String(st.name), team: normalizeTeam(st.team), nick: norm(st.nick),
+                    admin: admins.a1 === dev.phone || admins.a2 === dev.phone };
+  lsSet(LS.profile, state.profile);
+  state.identity = Object.assign({}, state.identity, { name: state.profile.name, team: state.profile.team, remember: true });
+  saveIdentity();
+  const today = ymd(new Date());
+  if (dev.seen !== today) fb("PUT", `/devices/${state.uid}/seen`, ROOT_URL, today).catch(() => {});
+  return state.profile;
+}
+/** 被移除：清掉這支手機上所有登入與快取資料 */
+function handleRevoked(msg) {
+  for (const k of [LS.refresh, LS.tasks, LS.rules, LS.lineup, LS.mode, LS.uid, LS.profile, LS.identity]) { try { localStorage.removeItem(k); } catch (e) {} }
+  Object.assign(state, { tasks: {}, refreshToken: "", idToken: "", tokenExpiry: 0, uid: "", mode: "", profile: null, online: false, identity: {} });
+  state.rules = new Rules(null); state.lineup = parseLineup(null);
+  showLogin(msg);
+}
+/** 資料庫拒絕存取時：判斷是被移除、共用帳號已停用，還是規則有問題 */
+async function explainDenied(e) {
+  if (state.mode === "device") {
+    try { await loadProfile(); } catch (err) { if (err instanceof RevokedError) { handleRevoked(err.message); return true; } }
+    return false;
+  }
+  try {
+    const acc = await fb("GET", "/access", ROOT_URL);
+    if (acc && acc.legacy === false) {
+      for (const k of [LS.refresh, LS.tasks, LS.mode]) { try { localStorage.removeItem(k); } catch (err) {} }
+      lsSet(LS.legacyClosed, true);
+      Object.assign(state, { tasks: {}, refreshToken: "", idToken: "", tokenExpiry: 0, online: false });
+      showLogin("共用帳號已停用。請輸入你的手機號碼和管理者給你的啟用碼。");
+      return true;
+    }
+  } catch (err) {}
+  return false;
+}
+function teamOptions(cur) {
+  return [["B1", "B1 小隊"], ["B2", "B2 小隊"], ["", "隊部（不分小隊）"]].map(([v, t]) => `<option value="${v}"${v === (cur || "") ? " selected" : ""}>${t}</option>`).join("");
+}
+/** 共用帳號的使用者改用個人啟用碼 */
+async function openActivate() {
+  const html = `<div class="sec" style="margin-top:12px">手機號碼</div><input type="tel" id="ac-phone" inputmode="numeric" placeholder="例如 0912345678">
+    <div class="sec">啟用碼</div><input type="text" id="ac-code" autocapitalize="characters" spellcheck="false" placeholder="8 碼，例如 K7M2-9QXA">
+    <div class="err" id="ac-err" style="color:var(--off-fg);font-size:13px;min-height:18px;margin-top:6px"></div>`;
+  const p = ask("🔒 啟用個人帳號", "輸入你的手機號碼和管理者給你的啟用碼。啟用後這支手機會記住你，不用再輸入密碼。", [["cancel", "取消", ""], ["ok", "啟用", "primary"]], html);
+  const wraps = document.querySelectorAll(".modal-wrap"), wrap = wraps[wraps.length - 1];
+  const btns = wrap.querySelectorAll(".btns .btn");
+  btns[1].onclick = async () => {
+    const err = wrap.querySelector("#ac-err"); err.textContent = "啟用中…"; btns[1].disabled = true;
+    try { await activateDevice(wrap.querySelector("#ac-phone").value, wrap.querySelector("#ac-code").value); }
+    catch (e) { err.textContent = e.message; btns[1].disabled = false; return; }
+    wrap.remove();
+    toast(`✔ 已啟用：${state.profile.name}`);
+    setBanner(""); await loadAll(false); renderAll();
+  };
+  return p;
+}
+/** 我的資料：姓名、小隊由管理者設定；暱稱自己改；這支手機固定是本人 */
+function openProfile() {
+  const pf = state.profile || {}, id = state.identity;
+  const hours = Array.from({ length: 9 }, (_, i) => 15 + i).map(h => `<option value="${h}">${h}:00</option>`).join("");
+  const html = `
+    <div class="card" style="margin-top:10px">
+      <div>姓名：<b>${esc(pf.name)}</b>　${esc(teamLabel(pf.team))}</div>
+      <div class="hint">手機：${esc(maskPhone(pf.phone))}${pf.admin ? "　🛡 管理者" : ""}・姓名和小隊由管理者設定</div>
+    </div>
+    <div class="sec">暱稱（顯示在畫面上方，可自己改，最多 12 字）</div>
+    <input type="text" id="pf-nick" maxlength="12" placeholder="${esc(pf.name)}">
+    <div class="sec">⏰ 值班提醒</div>
+    <div class="row"><label class="chk" style="flex:1"><input type="checkbox" id="pf-remind"> 值班前一天</label>
+      <select id="pf-hour" style="width:100px">${hours}</select></div>
+    <div class="hint">網頁開著時跳提醒；想在沒開網頁時也收到，請到「⚙ 設定」匯出到手機行事曆。這支手機固定是你的身分，不能改成別人。</div>
+    <div class="err" id="pf-err" style="color:var(--off-fg);font-size:13px;min-height:18px;margin-top:6px"></div>`;
+  const p = ask("👤 我的資料", "", [["preview", "預覽提醒", ""], ["cancel", "取消", ""], ["ok", "儲存", "primary"]], html);
+  const wraps = document.querySelectorAll(".modal-wrap"), wrap = wraps[wraps.length - 1];
+  wrap.querySelector("#pf-nick").value = pf.nick || "";
+  wrap.querySelector("#pf-remind").checked = id.remind !== false;
+  wrap.querySelector("#pf-hour").value = String(id.remindHour || 21);
+  const btns = wrap.querySelectorAll(".btns .btn");
+  btns[0].onclick = () => {
+    const dt = nextDutyDay();
+    if (!dt) { toast("接下來 60 天沒有本隊值班日"); return; }
+    showReminder(dt, reminderContent(dt), true);
+  };
+  btns[2].onclick = async () => {
+    const nick = wrap.querySelector("#pf-nick").value.trim().slice(0, 12), err = wrap.querySelector("#pf-err");
+    if (nick !== (pf.nick || "")) {
+      if (!state.online) { err.textContent = "目前離線，暱稱等連線後再改。"; return; }
+      try { await fb(nick ? "PUT" : "DELETE", `/staff/${pf.phone}/nick`, ROOT_URL, nick ? nick : undefined); }
+      catch (e) { err.textContent = "暱稱沒存成功：" + e.message; return; }
+      state.profile.nick = nick; lsSet(LS.profile, state.profile);
+    }
+    state.identity = Object.assign({}, state.identity, { remind: wrap.querySelector("#pf-remind").checked, remindHour: +wrap.querySelector("#pf-hour").value });
+    saveIdentity();
+    wrap.remove(); renderAll(); toast("✔ 已儲存"); maybeRemind();
+  };
+  return p;
+}
+const displayName = () => (state.mode === "device" && state.profile ? (state.profile.nick || state.profile.name) : state.identity.name);
+
+// ---------- 🛡 管理後台 ----------
+async function loadAdmin() {
+  const get = p => fb("GET", p, ROOT_URL).then(v => v || {});
+  const [staff, devices, invites, admins, access] = await Promise.all(["/staff", "/devices", "/invites", "/admins", "/access"].map(get));
+  state.adm = Object.assign(state.adm || {}, { staff, devices, invites, admins, access, loaded: true });
+}
+const isBootstrap = () => state.mode === "legacy" && state.setupDone === false;
+const canAdmin = () => (state.mode === "device" && state.profile && state.profile.admin) || isBootstrap();
+async function openAdmin() {
+  state.adm = state.adm || {};
+  openSheet("admin");
+  $("#adm-body").innerHTML = `<div class="hint" style="margin-top:12px">讀取中…</div>`;
+  if (!isBootstrap()) {
+    try { await loadAdmin(); } catch (e) { $("#adm-body").innerHTML = `<div class="banner" style="margin-top:12px">${esc(e.message)}</div>`; return; }
+  }
+  renderAdmin();
+}
+function rosterWith(fn) { const r = state.rules.roster.slice(); fn(r); return formatMembers(r); }
+function membersAdd(name, team) { return rosterWith(r => { const i = r.findIndex(x => x[0] === name); if (i >= 0) r[i] = [name, team]; else r.push([name, team]); }); }
+function membersRemove(name) { return rosterWith(r => { const i = r.findIndex(x => x[0] === name); if (i >= 0) r.splice(i, 1); }); }
+function membersRename(oldN, newN, team) { return rosterWith(r => { const i = r.findIndex(x => x[0] === oldN); if (i >= 0) r[i] = [newN, team]; else r.push([newN, team]); }); }
+/** 改名時，連值班順序、請假紀錄、這天手動指定一起改，不會對不起來 */
+function renamePatch(oldN, newN) {
+  const body = {};
+  const swap = x => (x === oldN ? newN : x);
+  for (const T of TEAMS) {
+    const ps = state.lineup[T].periods;
+    if (ps.some(p => [...p.order, ...p.backup, p.keeper, p.first].includes(oldN)))
+      body[`dutySettings/lineup/${T}`] = lineupTeamForCloud({ periods: ps.map(p => ({ start: p.start, order: p.order.map(swap), backup: p.backup.map(swap), keeper: swap(p.keeper), first: swap(p.first) })) });
+  }
+  for (const [d, t0] of Object.entries(state.tasks)) {
+    const t = t0 && typeof t0 === "object" ? t0 : {};
+    const lv = leavesOf(t);
+    if (Object.prototype.hasOwnProperty.call(lv, oldN)) { body[`tasks/${d}/leaves/${newN}`] = lv[oldN] || "請假"; body[`tasks/${d}/leaves/${oldN}`] = null; }
+    const ov = t.lineup && typeof t.lineup === "object" ? t.lineup : {};
+    for (const T of TEAMS) for (const f of ["duty", "standby"]) if (ov[T] && ov[T][f] === oldN) body[`tasks/${d}/lineup/${T}/${f}`] = newN;
+  }
+  return body;
+}
+async function admWrite(body, msg) {
+  if (!state.online) { alertBox("離線模式", "目前離線，無法修改。"); return false; }
+  state.busy++;
+  try { await fb("PATCH", "/", ROOT_URL, body); }
+  catch (e) {
+    if (e instanceof DbError) alertBox("沒有權限", isBootstrap() ? "請先完成第 2 步：把新的規則貼到 Firebase 並按「發布」，再回來按這個按鈕。" : "雲端拒絕這個修改（你可能已不是管理者）。");
+    else handleError(e, "修改失敗");
+    return false;
+  } finally { state.busy--; }
+  if (msg) toast(`✔ ${msg}`);
+  return true;
+}
+function inviteMessage(phone, code, exp) {
+  const url = location.origin + location.pathname;
+  const d = new Date(exp);
+  return `【${state.rules.my}行事曆】\n網址：${url}\n手機號碼：${phone}\n啟用碼：${fmtCode(code)}（${d.getMonth() + 1}/${d.getDate()} 前有效）\n打開網址，輸入手機號碼和啟用碼就能使用；電腦版在登入畫面輸入同樣的資料。`;
+}
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); toast("✔ 已複製，可以貼到 LINE 傳給同仁"); }
+  catch (e) {
+    const ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); toast("✔ 已複製"); } catch (err) { alertBox("請手動複製", t); }
+    ta.remove();
+  }
+}
+function renderAdmin() {
+  const box = $("#adm-body");
+  if (isBootstrap()) { box.innerHTML = bootstrapHtml(); return; }
+  const A = state.adm, me = state.profile || {};
+  const staff = Object.entries(A.staff || {}).sort((a, b) => (a[1].team || "Z").localeCompare(b[1].team || "Z") || String(a[1].name).localeCompare(String(b[1].name), "zh-Hant"));
+  const devsOf = p => Object.entries(A.devices || {}).filter(([, d]) => d && d.phone === p);
+  const isAdm = p => A.admins.a1 === p || A.admins.a2 === p;
+  const activated = staff.filter(([p]) => devsOf(p).length).length;
+  const legacyOpen = !(A.access && A.access.legacy === false);
+  let h = "";
+  if (A.lastInvite) {
+    const L = A.lastInvite;
+    h += `<div class="adm-new"><div><b>${esc(L.name)}</b> 的啟用碼</div><div class="adm-code">${esc(fmtCode(L.code))}</div>
+      <div class="hint">${CODE_DAYS} 天內有效，可以同時用在手機和電腦。</div>
+      <button class="btn primary block" data-act="copy-invite" style="margin-top:8px">📋 複製通知訊息（貼到 LINE）</button></div>`;
+  }
+  h += `<div class="sec">➕ 新增同仁</div>
+    <div class="grid2"><span>手機號碼</span><input type="tel" id="adm-phone" inputmode="numeric" placeholder="0912345678">
+      <span>姓名</span><input type="text" id="adm-name" maxlength="20" placeholder="例如 俊碩">
+      <span>小隊</span><select id="adm-team">${teamOptions("B1")}</select></div>
+    <button class="btn primary block" data-act="add" style="margin-top:8px">新增並產生啟用碼</button>
+    <div class="sec">👥 同仁（${staff.length} 人，已啟用 ${activated} 人）</div>`;
+  h += staff.map(([p, s]) => {
+    const devs = devsOf(p), inv = (A.invites || {})[p], open = A.openRow === p;
+    const last = devs.map(([, d]) => d.seen || "").sort().pop() || "";
+    const invTxt = inv && inv.exp > Date.now() && (!devs.length || inv.exp - CODE_DAYS * 864e5 > Math.max(...devs.map(([, d]) => Date.parse(String(d.at || "").replace(" ", "T")) || 0))) ? `・啟用碼 ${new Date(inv.exp).getMonth() + 1}/${new Date(inv.exp).getDate()} 到期` : "";
+    return `<div class="adm-row${open ? " open" : ""}">
+      <div class="adm-main" data-act="toggle" data-p="${p}">
+        <div class="adm-n"><b>${esc(s.name)}</b>${s.nick ? `<span class="hint">（${esc(s.nick)}）</span>` : ""}${isAdm(p) ? `<span class="adm-badge">管理者</span>` : ""}</div>
+        <div class="hint">${esc(teamLabel(normalizeTeam(s.team)))}・${esc(p)}・${devs.length ? `已啟用 ${devs.length} 台${last ? `，最近使用 ${esc(last.slice(5).replace("-", "/"))}` : ""}` : "尚未啟用"}${esc(invTxt)}</div>
+      </div>
+      ${open ? `<div class="adm-ops">
+        <button class="btn" data-act="reissue" data-p="${p}">🔑 產生新啟用碼</button>
+        <button class="btn" data-act="edit" data-p="${p}">✎ 改姓名／小隊</button>
+        ${isAdm(p) ? (p !== me.phone ? `<button class="btn" data-act="unadmin" data-p="${p}">取消管理者</button>` : "")
+                   : (!A.admins.a1 || !A.admins.a2 ? `<button class="btn" data-act="mkadmin" data-p="${p}">設為管理者</button>` : "")}
+        ${p !== me.phone ? `<button class="btn danger" data-act="remove" data-p="${p}">🚫 移除（調走）</button>` : ""}
+        ${devs.map(([uid, d]) => `<div class="adm-dev"><span>📱 ${esc(d.label || "裝置")}・啟用 ${esc(String(d.at || "").slice(5, 10).replace("-", "/"))}${d.seen ? `・最近 ${esc(String(d.seen).slice(5).replace("-", "/"))}` : ""}</span>
+          <button class="ib" data-act="rmdev" data-uid="${esc(uid)}" aria-label="移除這台裝置">✕</button></div>`).join("")}
+      </div>` : ""}
+    </div>`;
+  }).join("") || `<div class="hint">還沒有同仁。</div>`;
+  h += `<div class="sec">🛡 管理者（最多 2 人）</div>
+    <div class="hint">${["a1", "a2"].map(k => A.admins[k] ? esc(((A.staff || {})[A.admins[k]] || {}).name || A.admins[k]) : "（空）").join("、")}　在同仁那一列可以設定或取消。</div>
+    <div class="sec">🔓 舊的共用帳號</div>
+    <div class="card" style="margin-top:0">${legacyOpen
+      ? `目前<b>仍可</b>用共用帳號登入（轉換期間）。等大家都啟用完（目前 ${activated}/${staff.length} 人），按下面停用，用共用帳號的手機會立刻看不到。`
+      : `<b>已停用</b>，只剩用啟用碼的手機能看。`}</div>
+    <button class="btn ${legacyOpen ? "danger" : ""} block" data-act="legacy" style="margin-top:8px">${legacyOpen ? "停用共用帳號" : "重新開放共用帳號"}</button>
+    <div class="sec">📄 Firebase 規則</div>
+    <button class="btn block" data-act="rules">再次產生規則（換規則時用）</button>
+    <textarea id="adm-rules" class="hidden" rows="6" readonly style="margin-top:8px;font-family:monospace;font-size:11px"></textarea>`;
+  box.innerHTML = h;
+}
+function bootstrapHtml() {
+  return `<div class="card">第一次設定只要做一次：把你設為管理者，之後每位同仁用自己的手機號碼＋啟用碼登入；人員調走時在這裡刪除，他就看不到了。</div>
+    <div class="sec">① 你的資料</div>
+    <div class="grid2"><span>手機號碼</span><input type="tel" id="bs-phone" inputmode="numeric" placeholder="0912345678">
+      <span>姓名</span><input type="text" id="bs-name" maxlength="20" value="${esc(state.identity.name || "")}">
+      <span>小隊</span><select id="bs-team">${teamOptions(state.identity.team || "")}</select></div>
+    <div class="sec">② 到 Firebase 主控台（用電腦比較方便）</div>
+    <div class="hint">a. Authentication → 登入方式（Sign-in method）→ 新增供應商 → 選「匿名」→ 啟用 → 儲存。<br>
+      b. Realtime Database → 規則（Rules）→ 把內容全部換成下面產生的規則 → 發布（Publish）。</div>
+    <button class="btn block" data-act="bs-rules" style="margin-top:8px">產生規則</button>
+    <textarea id="bs-rules" class="hidden" rows="7" readonly style="margin-top:8px;font-family:monospace;font-size:11px"></textarea>
+    <button class="btn hidden" data-act="bs-copy" id="bs-copy" style="margin-top:6px">📋 複製規則</button>
+    <div class="sec">③ 完成設定</div>
+    <button class="btn primary block" data-act="bs-done">完成設定並啟用這支手機</button>
+    <div class="hint" style="margin-top:6px">轉換期間，同事原本的共用帳號登入照常可以用；等大家都改用啟用碼後，再到管理後台停用共用帳號。</div>`;
+}
+function adminEdit(p) {
+  const A = state.adm, s = A.staff[p];
+  const html = `<div class="grid2" style="margin-top:12px"><span>姓名</span><input type="text" id="ed-name" maxlength="20" value="${esc(s.name)}">
+    <span>小隊</span><select id="ed-team">${teamOptions(normalizeTeam(s.team))}</select></div>
+    <div class="hint" style="margin-top:6px">改姓名時，值班順序、請假紀錄裡的名字會一起改。</div>
+    <div class="err" id="ed-err" style="color:var(--off-fg);font-size:13px;min-height:18px;margin-top:6px"></div>`;
+  const pr = ask(`✎ ${s.name}`, "", [["cancel", "取消", ""], ["ok", "儲存", "primary"]], html);
+  const wraps = document.querySelectorAll(".modal-wrap"), wrap = wraps[wraps.length - 1];
+  const btns = wrap.querySelectorAll(".btns .btn");
+  btns[1].onclick = async () => {
+    const name = wrap.querySelector("#ed-name").value.trim(), team = wrap.querySelector("#ed-team").value, err = wrap.querySelector("#ed-err");
+    if (!name || BAD_KEY.test(name)) { err.textContent = "請輸入姓名（不能有 . $ # [ ] / 這些符號）"; return; }
+    if (name !== s.name && Object.entries(A.staff).some(([q, x]) => q !== p && x.name === name)) { err.textContent = `已經有人叫「${name}」了`; return; }
+    wrap.remove();
+    const body = { [`staff/${p}/name`]: name, [`staff/${p}/team`]: team, "dutySettings/rules/members": membersRename(s.name, name, team) };
+    if (name !== s.name) Object.assign(body, renamePatch(s.name, name));
+    if (await admWrite(body, `已更新 ${name}`)) {
+      if (state.profile && state.profile.phone === p) { state.profile.name = name; state.profile.team = normalizeTeam(team); }
+      await loadAll(false); await loadAdmin(); renderAdmin();
+    }
+  };
+  return pr;
+}
+async function onAdminClick(e) {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const act = b.dataset.act, p = b.dataset.p, A = state.adm;
+  if (act === "bs-rules") {
+    const phone = normPhone($("#bs-phone").value);
+    if (!validPhone(phone)) { alertBox("手機號碼", "請先在 ① 填好你的手機號碼。"); return; }
+    if (!state.uid) { alertBox("找不到帳號資訊", "請登出後用共用帳號重新登入一次，再回來產生規則。"); return; }
+    $("#bs-rules").value = buildRules(state.uid, phone);
+    $("#bs-rules").classList.remove("hidden"); $("#bs-copy").classList.remove("hidden");
+    return;
+  }
+  if (act === "bs-copy") { copyText($("#bs-rules").value); return; }
+  if (act === "bs-done") {
+    const phone = normPhone($("#bs-phone").value), name = $("#bs-name").value.trim(), team = $("#bs-team").value;
+    if (!validPhone(phone) || !name) { alertBox("資料不完整", "請填好你的手機號碼和姓名。"); return; }
+    if (BAD_KEY.test(name)) { alertBox("姓名格式", "姓名裡不能有 . $ # [ ] / 這些符號。"); return; }
+    const code = genCode(), exp = Date.now() + CODE_DAYS * 864e5;
+    const body = { [`staff/${phone}`]: { name, team, addedAt: nowStr(), addedBy: name }, "admins/a1": phone,
+      [`invites/${phone}`]: { code, exp }, "access/legacy": true, "access/legacyUid": state.uid,
+      "dutySettings/rules/members": membersAdd(name, team) };
+    if (!(await admWrite(body))) return;
+    try { await activateDevice(phone, code); }
+    catch (err) { alertBox("設定完成，但這支手機沒啟用成功", `${err.message}\n\n你的啟用碼：${fmtCode(code)}（請記下來，在登入畫面輸入）。`); return; }
+    state.setupDone = true; setBanner("");
+    alertBox("✔ 設定完成", `你已是管理者，這支手機也已啟用為「${name}」。\n\n接下來在管理後台新增同仁，把啟用碼傳給他們。你的電腦版要用的話，在後台按你自己那一列的「產生新啟用碼」。`);
+    await loadAll(false); await openAdmin();
+    return;
+  }
+  if (act === "copy-invite") { const L = A.lastInvite; copyText(inviteMessage(L.phone, L.code, L.exp)); return; }
+  if (act === "toggle") { A.openRow = A.openRow === p ? "" : p; renderAdmin(); return; }
+  if (act === "add") {
+    const phone = normPhone($("#adm-phone").value), name = $("#adm-name").value.trim(), team = $("#adm-team").value;
+    if (!validPhone(phone)) { alertBox("手機號碼", "手機號碼格式不對（例如 0912345678）。"); return; }
+    if (!name || BAD_KEY.test(name)) { alertBox("姓名", "請輸入姓名（不能有 . $ # [ ] / 這些符號）。"); return; }
+    if (A.staff[phone]) { alertBox("已經有這個號碼", `${phone} 已經是「${A.staff[phone].name}」。要重發啟用碼請點他那一列。`); return; }
+    if (Object.values(A.staff).some(s => s.name === name)) { alertBox("姓名重複", `已經有人叫「${name}」了，請換個寫法（例如加上小隊）。`); return; }
+    const code = genCode(), exp = Date.now() + CODE_DAYS * 864e5;
+    const ok = await admWrite({ [`staff/${phone}`]: { name, team, addedAt: nowStr(), addedBy: state.identity.name || "" },
+      [`invites/${phone}`]: { code, exp }, "dutySettings/rules/members": membersAdd(name, team) }, `已新增 ${name}`);
+    if (!ok) return;
+    A.lastInvite = { phone, name, code, exp };
+    await syncSettings(); await loadAdmin(); renderAdmin(); renderAll();
+    $("#admin-sheet .body").scrollTop = 0;
+    return;
+  }
+  if (act === "reissue") {
+    const code = genCode(), exp = Date.now() + CODE_DAYS * 864e5, s = A.staff[p];
+    if (!(await admWrite({ [`invites/${p}`]: { code, exp } }, "已產生新啟用碼"))) return;
+    A.lastInvite = { phone: p, name: s.name, code, exp };
+    await loadAdmin(); renderAdmin(); $("#admin-sheet .body").scrollTop = 0;
+    return;
+  }
+  if (act === "edit") { adminEdit(p); return; }
+  if (act === "mkadmin" || act === "unadmin") {
+    const slot = act === "mkadmin" ? (!A.admins.a1 ? "a1" : !A.admins.a2 ? "a2" : "") : (A.admins.a1 === p ? "a1" : "a2");
+    if (!slot) { alertBox("管理者已滿", "最多 2 位管理者。"); return; }
+    const who = A.staff[p].name;
+    if (!(await confirmBox(act === "mkadmin" ? "設為管理者" : "取消管理者", `${act === "mkadmin" ? "讓" : "取消"}「${who}」${act === "mkadmin" ? "成為管理者？管理者可以新增、移除同仁。" : "的管理者權限？"}`))) return;
+    if (await admWrite({ [`admins/${slot}`]: act === "mkadmin" ? p : null }, act === "mkadmin" ? `${who} 已是管理者` : "已取消")) { await loadAdmin(); renderAdmin(); }
+    return;
+  }
+  if (act === "remove") {
+    const s = A.staff[p];
+    const inLineup = TEAMS.some(T => state.lineup[T].periods.some(x => [...x.order, ...x.backup, x.keeper].includes(s.name)));
+    if (!(await confirmBox("移除同仁", `移除「${s.name}」（${p}）？\n他所有啟用過的手機、電腦會立刻看不到行事曆。${inLineup ? "\n\n⚠ 他還在值班人員順序裡，記得到「值班人員順序」把他移出。" : ""}`, "移除", true))) return;
+    const body = { [`staff/${p}`]: null, [`invites/${p}`]: null, "dutySettings/rules/members": membersRemove(s.name) };
+    for (const [uid, d] of Object.entries(A.devices || {})) if (d && d.phone === p) body[`devices/${uid}`] = null;
+    for (const k of ["a1", "a2"]) if (A.admins[k] === p) body[`admins/${k}`] = null;
+    if (await admWrite(body, `已移除 ${s.name}`)) { A.openRow = ""; await syncSettings(); await loadAdmin(); renderAdmin(); renderAll(); }
+    return;
+  }
+  if (act === "rmdev") {
+    const d = A.devices[b.dataset.uid] || {};
+    if (!(await confirmBox("移除裝置", `移除這台「${d.label || "裝置"}」？它會立刻看不到行事曆（人還在名單裡，可以再給啟用碼）。`, "移除", true))) return;
+    if (await admWrite({ [`devices/${b.dataset.uid}`]: null }, "已移除裝置")) { await loadAdmin(); renderAdmin(); }
+    return;
+  }
+  if (act === "legacy") {
+    const open = !(A.access && A.access.legacy === false);
+    if (open && !(await confirmBox("停用共用帳號", "停用後，還在用共用帳號的手機、電腦會立刻看不到行事曆，只能用啟用碼登入。確定嗎？", "停用", true))) return;
+    if (await admWrite({ "access/legacy": !open }, open ? "已停用共用帳號" : "已重新開放共用帳號")) { await loadAdmin(); renderAdmin(); }
+    return;
+  }
+  if (act === "rules") {
+    const t = $("#adm-rules"), uid = (A.access && A.access.legacyUid) || "";
+    t.value = buildRules(uid, A.admins.a1 || ""); t.classList.remove("hidden"); copyText(t.value);
+  }
+}
+
 // ==========================================
 // 🚪 登入、啟動
 // ==========================================
@@ -2038,11 +2566,14 @@ function showLogin(msg) {
   state.mainVisible = false;
   $("#loading").classList.add("hidden"); $("#main").classList.add("hidden"); $("#login").classList.remove("hidden");
   openSheet(null);
-  $("#login-err").textContent = msg || "";
+  $("#act-err").textContent = msg || ""; $("#login-err").textContent = "";
   $("#acc").value = localStorage.getItem(LS.account) || "";
+  $("#act-phone").value = localStorage.getItem(LS.phone) ? JSON.parse(localStorage.getItem(LS.phone)) : "";
+  $("#act-code").value = "";
+  $("#legacy-box").open = false; $("#legacy-box").classList.toggle("hidden", !!lsGet(LS.legacyClosed, false));
   $("#offline-btn").classList.toggle("hidden", !Object.keys(state.tasks).length);
   renderLegend();
-  (($("#acc").value) ? $("#pwd") : $("#acc")).focus();
+  ($("#act-phone").value ? $("#act-code") : $("#act-phone")).focus();
 }
 function enterMain() {
   state.mainVisible = true;
@@ -2054,6 +2585,7 @@ function afterMainReady() {
   if (readyDone) return;
   readyDone = true;
   if (!state.identity.name) setTimeout(() => openIdentity(true), 200);
+  else if (state.mode === "device") setStatus($("#status").textContent + `　👤 ${displayName()}（${teamLabel(state.identity.team)}）`);
   else setStatus($("#status").textContent + `　👤 已自動辨識：${state.identity.name}（${teamLabel(state.identity.team)}）`);
   setTimeout(maybeRemind, 1500);
   setInterval(maybeRemind, REMIND_CHECK_MS);
@@ -2067,8 +2599,17 @@ async function doLogin() {
   try { await signIn(email, pwd); }
   catch (e) { $("#login-err").textContent = e.message; btn.disabled = false; btn.textContent = "登入"; return; }
   btn.disabled = false; btn.textContent = "登入";
+  setMode("legacy"); state.profile = null;
   try { localStorage.setItem(LS.account, acc); } catch (e) {}
   $("#pwd").value = "";
+  enterMain();
+  await loadAll(false);
+}
+async function doActivate() {
+  const btn = $("#act-btn"); btn.disabled = true; btn.textContent = "啟用中…"; $("#act-err").textContent = "";
+  try { await activateDevice($("#act-phone").value, $("#act-code").value); }
+  catch (e) { $("#act-err").textContent = e.message; btn.disabled = false; btn.textContent = "啟用這支手機"; return; }
+  btn.disabled = false; btn.textContent = "啟用這支手機";
   enterMain();
   await loadAll(false);
 }
@@ -2114,21 +2655,35 @@ function setupEvents() {
     $("#show-others").checked = !!state.showOthers;
     const meta = state.settingsMeta.updatedAt ? `（最後更新：${state.settingsMeta.updatedBy || "未具名"}・${state.settingsMeta.updatedAt}）` : "";
     $("#s-rules").textContent = `輪值順序、本隊／預備隊、成員名冊、自訂假日都存在雲端，和電腦版共用；請在電腦版的「⚙ 規則」修改。${meta}`;
+    const dev = state.mode === "device";
+    $("#s-identity").textContent = dev ? "👤 我的資料、暱稱、提醒時間" : "👤 身分、小隊、提醒時間";
+    $("#s-activate").classList.toggle("hidden", dev);
+    $("#s-admin").classList.toggle("hidden", !canAdmin() && !(state.mode === "legacy" && state.setupDone === false));
+    $("#s-admin").textContent = isBootstrap() ? "🛡 管理者首次設定" : "🛡 管理後台";
+    $("#s-acct").textContent = dev && state.profile ? `這支手機已啟用為「${state.profile.name}」（${maskPhone(state.profile.phone)}）。` : "目前用舊的共用帳號登入。";
     openSheet("settings");
   };
   $("#backdrop").onclick = () => closeSheet();
   setupLineupEvents();
+  $("#theme-sel").onchange = e => { document.documentElement.setAttribute("data-theme", e.target.value); try { localStorage.setItem(LS.theme, e.target.value); } catch (err) {} };
   document.querySelectorAll(".sheet").forEach(enableSwipeClose);
   document.querySelectorAll("[data-close]").forEach(b => b.onclick = () => closeSheet());
-  $("#theme-sel").onchange = e => { document.documentElement.setAttribute("data-theme", e.target.value); try { localStorage.setItem(LS.theme, e.target.value); } catch (err) {} };
   $("#show-others").onchange = e => { state.showOthers = e.target.checked; lsSet(LS.others, state.showOthers); renderCalendar(); };
   $("#s-identity").onclick = () => openIdentity(false);
   $("#s-ics").onclick = exportIcs;
   $("#s-logout").onclick = async () => {
-    if (!(await confirmBox("登出", "要登出這支手機，並清除手機上的快取資料嗎？（不影響其他同事）", "登出", true))) return;
+    const msg = state.mode === "device" ? "要登出這支手機，並清除手機上的快取資料嗎？\n登出後要重新輸入啟用碼（啟用碼過期的話要向管理者再要一組）。"
+                                        : "要登出這支手機，並清除手機上的快取資料嗎？（不影響其他同事）";
+    if (!(await confirmBox("登出", msg, "登出", true))) return;
     for (const k of [LS.refresh, LS.tasks]) { try { localStorage.removeItem(k); } catch (e) {} }
     state.tasks = {}; authLost("已登出");
   };
+  $("#s-activate").onclick = () => { closeSheet(); openActivate(); };
+  $("#s-admin").onclick = () => openAdmin();
+  $("#adm-body").addEventListener("click", onAdminClick);
+  $("#act-btn").onclick = doActivate;
+  $("#act-code").addEventListener("keydown", e => { if (e.key === "Enter") doActivate(); });
+  $("#act-phone").addEventListener("keydown", e => { if (e.key === "Enter") $("#act-code").focus(); });
 
   // 單日編輯
   $("#d-status").addEventListener("click", e => {
