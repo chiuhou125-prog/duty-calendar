@@ -73,10 +73,11 @@
   .btn.ghost { background: var(--surface); }
   .btn:disabled { opacity: .45; cursor: default; }
   .btn.block { width: 100%; }
-  input[type=text], input[type=password], input[type=tel], select, textarea {
+  input[type=text], input[type=password], input[type=tel], input[type=search], input[type=date], select, textarea {
     width: 100%; background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 10px;
     padding: 10px 11px; font: inherit; font-size: 16px; outline: none; }
   input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  html:not([data-theme]) input[type=date], [data-theme="default"] input[type=date], [data-theme="minecraft"] input[type=date] { color-scheme: dark; }
   input:disabled, select:disabled, textarea:disabled { color: var(--muted); }
   textarea { resize: vertical; min-height: 64px; line-height: 1.45; }
   label.chk { display: flex; align-items: center; gap: 8px; font-size: 15px; padding: 6px 0; cursor: pointer; }
@@ -104,8 +105,9 @@
   .nav { margin-left: auto; display: flex; gap: 6px; }
   .nav .btn { padding: 8px 12px; }
   .tools { display: flex; gap: 6px; margin: 10px 0 8px; align-items: center; }
-  .tools .btn { padding: 8px 11px; font-size: 13px; }
-  .tools .me { max-width: 42vw; overflow: hidden; text-overflow: ellipsis; }
+  .tools .btn { padding: 8px 9px; font-size: 13px; white-space: nowrap; flex: none; }
+  @media (max-width: 400px) { .tools { gap: 4px; } .tools .lbl { display: none; } }
+  .tools .me { max-width: 30vw; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
   .tools .btn.on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
   .legend { display: flex; gap: 12px; font-size: 11.5px; color: var(--muted); margin: 0 2px 8px; overflow-x: auto;
     white-space: nowrap; scrollbar-width: none; }
@@ -243,6 +245,66 @@
   .lhist .t { flex: 1; min-width: 0; }
   .lhist .t b { font-weight: 800; }
 
+  /* 🚩 本月重點 */
+  .tools .badge { display: inline-block; min-width: 18px; height: 18px; line-height: 18px; border-radius: 9px; padding: 0 5px; margin-left: 3px;
+    background: var(--off-fg); color: var(--bg); font-size: 11.5px; font-weight: 800; text-align: center; }
+  .nlist { display: flex; flex-direction: column; gap: 6px; }
+  .nrow { display: flex; align-items: flex-start; gap: 8px; background: var(--surface2); border-radius: 10px; padding: 9px 10px; margin-bottom: 6px; border-left: 4px solid var(--off-fg); }
+  .nrow.done { border-left-color: var(--border); opacity: .72; }
+  .nrow.done .nt { text-decoration: line-through; text-decoration-color: var(--muted); }
+  .nchk { flex: none; width: 26px; height: 26px; border-radius: 7px; border: 2px solid var(--muted); background: var(--surface); color: var(--duty-fg);
+    font-size: 16px; font-weight: 900; line-height: 1; cursor: pointer; padding: 0; margin-top: 1px; }
+  .nrow.done .nchk { border-color: var(--duty-fg); }
+  .nrow .nm { flex: 1; min-width: 0; cursor: pointer; }
+  .nt { font-size: 15.5px; font-weight: 700; line-height: 1.45; word-break: break-word; }
+  .nw { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .nw.ok { color: var(--duty-fg); }
+  .ntag { display: inline-block; font-size: 11.5px; font-weight: 800; border-radius: 6px; padding: 0 6px; margin-left: 2px; vertical-align: 1px;
+    background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+  .ntag.late { color: var(--off-fg); border-color: var(--off-fg); }
+  .ntag.soon { color: var(--holiday-fg); border-color: var(--holiday-fg); }
+  details.ndone summary { cursor: pointer; font-size: 13px; font-weight: 700; color: var(--muted); margin: 10px 0 8px; }
+  .nauto { font-size: 14px; line-height: 1.5; background: var(--surface2); border-radius: 10px; padding: 8px 10px; margin-bottom: 6px; }
+  .nauto.late { color: var(--off-fg); font-weight: 700; }
+  .nauto.soon { color: var(--holiday-fg); font-weight: 700; }
+  .npop { margin-top: 8px; max-height: 52vh; overflow-y: auto; }
+  .npi { background: var(--surface2); border-radius: 10px; padding: 8px 10px; margin-bottom: 6px; border-left: 4px solid var(--off-fg); font-size: 15px; }
+  .card.warnc { color: var(--off-fg); }
+  .fb-err { color: var(--off-fg); font-size: 13px; min-height: 18px; margin-top: 8px; white-space: pre-line; }
+  .modal textarea { width: 100%; }
+  /* 📶 SIM 卡 */
+  .ssum { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 13px; color: var(--muted); background: var(--surface2); border-radius: 10px; padding: 8px 10px; margin-top: 10px; }
+  .ssum b { color: var(--text); font-size: 15px; }
+  .ssum .late, .ssum .late b { color: var(--off-fg); }
+  .sfil { display: flex; gap: 6px; overflow-x: auto; margin: 10px 0 8px; padding-bottom: 2px; }
+  .sfil button { flex: none; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 16px; padding: 6px 12px; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+  .sfil button.on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .srow { background: var(--surface2); border-radius: 12px; padding: 9px 12px; margin-bottom: 7px; cursor: pointer; }
+  .srow.ended { opacity: .65; }
+  .st1, .sdh { display: flex; align-items: baseline; gap: 8px; }
+  .stail { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 19px; font-weight: 800; letter-spacing: .5px; }
+  .stail.big { font-size: 26px; }
+  .scar { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+  .sbadge { margin-left: auto; font-size: 12px; font-weight: 800; border-radius: 7px; padding: 2px 8px; background: var(--surface); border: 1px solid var(--border); white-space: nowrap; }
+  .sbadge.s-inuse { color: var(--duty-fg); border-color: var(--duty-fg); }
+  .sbadge.s-stock { color: var(--reserve-fg); border-color: var(--reserve-fg); }
+  .sbadge.s-lent { color: var(--holiday-fg); border-color: var(--holiday-fg); }
+  .sbadge.s-off, .sbadge.s-returned, .sbadge.s-removed { color: var(--muted); }
+  .sx { font-size: 13.5px; line-height: 1.5; margin-top: 2px; word-break: break-word; }
+  .sx.b { color: var(--leave-fg); }
+  .sx.m { font-size: 11.5px; color: var(--muted); }
+  .sx.late { color: var(--off-fg); font-weight: 700; }
+  .sx.soon { color: var(--holiday-fg); font-weight: 700; }
+  .sgrid { margin-top: 10px; grid-template-columns: 76px 1fr; }
+  .sgrid > div { min-width: 0; word-break: break-word; }
+  .sgrid input, .sgrid select { width: 100%; min-width: 0; }
+  .sbtns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .sbtns .btn { font-size: 14px; padding: 9px 12px; }
+  .slog { display: flex; flex-direction: column; gap: 5px; }
+  .sl { font-size: 13px; line-height: 1.5; background: var(--surface2); border-radius: 8px; padding: 6px 9px; word-break: break-word; }
+  .sl .t { color: var(--muted); font-size: 12px; margin-right: 6px; }
+  .modal .seg button { font-size: 14px; padding: 7px 4px; }
+
   /* 多選列 */
   .multibar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 30;
     background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 6px 24px var(--shadow);
@@ -325,8 +387,10 @@
     </div>
   </div>
   <div class="tools">
-    <button class="btn ghost" id="sync">🔄 同步</button>
-    <button class="btn ghost" id="multi-btn">☑ 多選</button>
+    <button class="btn ghost" id="sync" aria-label="同步">🔄</button>
+    <button class="btn ghost" id="multi-btn" aria-label="多選">☑<span class="lbl"> 多選</span></button>
+    <button class="btn ghost" id="flag-btn">🚩 重點</button>
+    <button class="btn ghost" id="sim-btn">📶 SIM</button>
     <button class="btn ghost me" id="me-btn">👤 選擇身分</button>
     <button class="btn ghost" id="settings-btn" style="margin-left:auto">⚙</button>
   </div>
@@ -353,6 +417,7 @@
     <div class="card"><div id="d-default"></div><div class="res" id="d-result"></div><div class="lvsum" id="d-leave-sum"></div></div>
     <div class="lineup" id="d-lineup"></div>
 
+    <div id="d-flags"></div>
     <!-- 最常看的放最上面：執行案件、一般記事 -->
     <div class="sec ent-h" style="color:var(--case-fg)">⭐ 執行案件</div>
     <div class="elist" id="d-cases" style="--ec:var(--case-fg)"></div>
@@ -465,6 +530,36 @@
   </div>
 </div>
 
+<!-- 🚩 本月重點 -->
+<div class="sheet" id="notice-sheet" aria-hidden="true">
+  <div class="grab"></div>
+  <div class="body">
+    <div class="sh-head"><div style="min-width:0"><div class="sh-title">🚩 本月重點</div>
+      <div class="sh-sub">全隊都能新增、打勾；只有新增的人或管理者能修改、刪除。</div></div>
+      <button class="x" data-close="notice" aria-label="關閉">✕</button></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn ghost" id="n-prev" aria-label="上個月">◀</button>
+      <div class="grow" id="n-month" style="text-align:center;font-weight:800;font-size:16px"></div>
+      <button class="btn ghost" id="n-next" aria-label="下個月">▶</button>
+    </div>
+    <button class="btn primary block" id="n-add" style="margin-top:10px">＋ 新增重點事項</button>
+    <div class="nlist" id="n-list" style="margin-top:12px"></div>
+    <div id="n-auto"></div>
+    <label class="chk" style="margin-top:14px"><input type="checkbox" id="n-pop"> 每天第一次開啟時自動跳出（只影響這台裝置）</label>
+  </div>
+</div>
+
+<!-- 📶 SIM 卡管理 -->
+<div class="sheet" id="sim-sheet" aria-hidden="true">
+  <div class="grab"></div>
+  <div class="body">
+    <div class="sh-head"><div style="min-width:0"><div class="sh-title">📶 SIM 卡管理</div>
+      <div class="sh-sub">本隊的卡、向他隊借的卡、借出去的卡，現在在誰那、做什麼用。</div></div>
+      <button class="x" data-close="sim" aria-label="關閉">✕</button></div>
+    <div id="sim-body"></div>
+  </div>
+</div>
+
 <!-- 管理後台 -->
 <div class="sheet" id="admin-sheet" aria-hidden="true">
   <div class="grab"></div>
@@ -534,7 +629,8 @@ const EMAIL_DOMAIN = "@ntpd.gov.tw";
 const HTTP_TIMEOUT = 12000, POLL_MS = 60000, REMIND_CHECK_MS = 30000, SETTINGS_POLL_EVERY = 3;
 const LS = { theme: "duty_app_theme", refresh: "duty_app_refresh", account: "duty_app_account", identity: "duty_identity",
              tasks: "duty_cache_tasks", rules: "duty_cache_rules", others: "duty_show_others", lineup: "duty_cache_lineup",
-             mode: "duty_auth_mode", uid: "duty_auth_uid", phone: "duty_device_phone", profile: "duty_profile", legacyClosed: "duty_legacy_closed" };
+             mode: "duty_auth_mode", uid: "duty_auth_uid", phone: "duty_device_phone", profile: "duty_profile", legacyClosed: "duty_legacy_closed",
+             notices: "duty_cache_notices", sims: "duty_cache_sims", noticePop: "duty_notice_popup" };
 
 const THEME_NAMES = { default: "🚓 經典暗黑", minimal: "☕ 無印文青", nature: "🏕 自然原木", ocean: "🌊 休閒海洋", minecraft: "🧱 麥塊像素" };
 const WD = "日一二三四五六";
@@ -855,6 +951,8 @@ const state = {
   rules: new Rules(lsGet(LS.rules, null)),
   lineup: parseLineup(lsGet(LS.lineup, null)), lineupMeta: {},
   settingsMeta: {}, settingsOk: true,
+  notices: lsGet(LS.notices, {}) || {}, sims: lsGet(LS.sims, {}) || {}, noticesOk: null, simsOk: null,
+  noticeMonth: null, simView: null, simFilter: "active", simQuery: "",
   online: false, mainVisible: false, busy: 0, pollCount: 0,
   idToken: "", refreshToken: localStorage.getItem(LS.refresh) || "", tokenExpiry: 0,
   month: (() => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), 1); })(),
@@ -1004,9 +1102,12 @@ function cellEvents(info, wide, lu) {
     }
     const me = myRole(lu, state.identity.name);
     if (me && ["值班", "大備", "二備"].includes(me.role)) E.push([`我${me.role}`, "accent"]);
-  } else if (info.role === "duty") E.push([wide ? `值班 ${info.bCycle}`.trim() : (info.bCycle.replace("/", "") || "本隊值班"), "duty-fg"]);
+  }
+  else if (info.role === "duty") E.push([wide ? `值班 ${info.bCycle}`.trim() : (info.bCycle.replace("/", "") || "本隊值班"), "duty-fg"]);
   else if (info.role === "duty_off") E.push(["本隊值班日", "muted"]);
   else if (info.role === "reserve") E.push(["預備", "reserve-fg"]);
+  const fl = info.flags || [];     // 有期限的本月重點（還沒完成的）
+  if (fl.length) E.push([fl.length > 1 ? `🚩${fl.length}項重點` : `🚩${fl[0].text}`, "off-fg"]);
   if (info.holiday) E.push([info.holiday, "holiday-fg"]);
   if (info.isOff) { if (info.reason && info.reason !== "休假" && info.reason !== info.holiday) E.push([info.reason, "off-fg"]); }
   else if (info.label) E.push([info.label, "manual-fg"]);
@@ -1080,6 +1181,7 @@ function renderCalendar() {
     let cls = "cell" + (dt.getDay() === 0 ? " sun" : dt.getDay() === 6 ? " sat" : "");
     if (!inMonth) cls += " other"; else if (info.isOff) cls += " off"; else if (info.role === "duty") cls += " duty";
     if (sel.has(d)) cls += state.multiMode ? " sel msel" : " sel";
+    info.flags = noticesDue(d).filter(n => !n.done && noticeForMe(n));
     let evs = cellEvents(info, wide, LU.get(d));
     if (evs.length > maxEv) evs = evs.slice(0, maxEv - 1).concat([[`＋${evs.length - maxEv + 1}`, "more"]]);
     html += `<div class="${cls}" data-d="${d}"><div class="top"><span class="num${d === today ? " today" : ""}">${dt.getDate()}</span></div>` +
@@ -1090,17 +1192,23 @@ function renderCalendar() {
 }
 function renderTools() {
   const id = state.identity;
-  $("#me-btn").textContent = id.name ? `👤 ${displayName()}・${id.team || "隊部"}` : "👤 選擇身分";
+  $("#me-btn").textContent = id.name ? `👤 ${displayName()}` : "👤 選擇身分";
+  $("#me-btn").title = id.name ? `${id.name}・${teamLabel(id.team)}` : "";
   $("#multi-btn").classList.toggle("on", state.multiMode);
-  $("#multi-btn").textContent = state.multiMode ? "☑ 多選中" : "☑ 多選";
+  $("#multi-btn").innerHTML = state.multiMode ? '☑<span class="lbl"> 多選中</span>' : '☑<span class="lbl"> 多選</span>';
   const names = leaveNames();
   $("#roster-list").innerHTML = names.map(n => `<option value="${esc(n)}"></option>`).join("");
+  const cnt = openNotices().length, late = simArr().some(x => simAlerts(x).some(a => a[1] === "late"));
+  $("#flag-btn").innerHTML = `🚩 重點${cnt ? `<span class="badge">${cnt}</span>` : ""}`;
+  $("#sim-btn").innerHTML = `📶 SIM${late ? '<span class="badge">!</span>' : ""}`;
 }
 function renderAll() {
   renderLegend(); renderTools(); renderCalendar(); renderMultibar();
   if (state.openSheet === "day") refreshDaySheet(true);
   if (state.openSheet === "batch") refreshBatchSheet();
   if (state.openSheet === "lineup") renderLineupEditor();
+  if (state.openSheet === "notice") renderNotices();
+  if (state.openSheet === "sim") renderSims();
 }
 function leaveNames() {
   const names = state.rules.members.slice(), me = state.identity.name;
@@ -1121,7 +1229,7 @@ function applyOnlineState() {
 // 📲 面板開關
 // ==========================================
 function openSheet(name) {
-  for (const s of ["day", "batch", "settings", "lineup", "admin"]) {
+  for (const s of ["day", "batch", "settings", "lineup", "admin", "notice", "sim"]) {
     $(`#${s}-sheet`).classList.toggle("show", s === name);
     $(`#${s}-sheet`).setAttribute("aria-hidden", s === name ? "false" : "true");
   }
@@ -1307,6 +1415,7 @@ function refreshDaySheet(full) {
   $("#d-swap-sum").classList.toggle("adj", swapped);
   const hol = state.rules.holidayName(dt), t = task(d);
   $("#d-title").textContent = `${dt.getMonth() + 1}月${dt.getDate()}日　星期${WD[dt.getDay()]}`;
+  renderDayFlags();
   $("#d-sub").textContent = `${dt.getFullYear()} 年（民國 ${dt.getFullYear() - 1911} 年）` + (hol ? `・${hol}` : "") + (d === ymd(new Date()) ? "・今天" : "");
   $("#d-meta").textContent = norm(t.updatedAt) ? `最後修改：${norm(t.updatedBy) || "（未具名）"}・${norm(t.updatedAt)}` : "";
   $("#d-default").textContent = "預設　" + describe(dayInfo(dt, {}));
@@ -1630,7 +1739,7 @@ async function resetBatch() {
 // ==========================================
 // 👮 值班人員順序：編輯畫面
 // ==========================================
-const mdw = d => { const x = typeof d === "string" ? parseYmd(d) : d; return `${x.getMonth() + 1}/${x.getDate()}（${WD[x.getDay()]}）`; };
+const mdw = d => { const x = typeof d === "string" ? parseYmd(d) : d; return x ? `${x.getMonth() + 1}/${x.getDate()}（${WD[x.getDay()]}）` : ""; };
 /** 本隊值班日（含換班），from～to */
 function dutyDaysBetween(from, to) {
   const out = [];
@@ -1845,6 +1954,7 @@ async function loadAll(manual) {
     saveCache();
     state.online = true;
     await syncSettings();
+    await syncExtras();
     if (state.mode === "legacy") {
       try { const a = await fb("GET", "/admins", ROOT_URL); state.setupDone = !!(a && (a.a1 || a.a2)); }
       catch (err) { state.setupDone = false; }
@@ -1882,6 +1992,10 @@ async function refreshFromCloud() {
   state.pollCount++;
   let rulesChanged = false;
   if (!wasOnline || state.pollCount % SETTINGS_POLL_EVERY === 0) { try { rulesChanged = await syncSettings(); } catch (e) {} }
+  try {
+    const every = !wasOnline || state.pollCount % SETTINGS_POLL_EVERY === 0 || state.openSheet === "sim";
+    if (await syncExtras(every ? null : "notices")) rulesChanged = true;
+  } catch (e) {}
   state.busy--;
   const changed = JSON.stringify(data) !== JSON.stringify(state.tasks);
   if (!wasOnline) { state.online = true; applyOnlineState(); }
@@ -2109,6 +2223,20 @@ function buildRules(sharedUid, ownerPhone) {
   return JSON.stringify({ rules: {
     tasks: { ".read": MEMBER, ".write": MEMBER },
     dutySettings: { ".read": MEMBER, ".write": MEMBER },
+    // 本月重點：全隊可新增、打勾；刪除只有新增的人（或管理者）
+    notices: {
+      ".read": MEMBER,
+      "$id": {
+        ".write": `(${MEMBER}) && (newData.exists() || ${LEGACY} || ${ADM} || (${HAS} && data.child('byPhone').val() === ${PH}))`,
+        ".validate": "newData.hasChildren(['text'])",
+        text: { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" },
+      },
+    },
+    // SIM 卡：全隊都能改（每次修改都會留紀錄）
+    sims: {
+      ".read": MEMBER, ".write": MEMBER,
+      "$id": { tail: { ".validate": "newData.isString() && newData.val().length >= 4 && newData.val().length <= 5" } },
+    },
     staff: {
       ".read": ADMIN, ".write": ADMIN,
       "$phone": {
@@ -2226,8 +2354,8 @@ async function loadProfile() {
 }
 /** 被移除：清掉這支手機上所有登入與快取資料 */
 function handleRevoked(msg) {
-  for (const k of [LS.refresh, LS.tasks, LS.rules, LS.lineup, LS.mode, LS.uid, LS.profile, LS.identity]) { try { localStorage.removeItem(k); } catch (e) {} }
-  Object.assign(state, { tasks: {}, refreshToken: "", idToken: "", tokenExpiry: 0, uid: "", mode: "", profile: null, online: false, identity: {} });
+  for (const k of [LS.refresh, LS.tasks, LS.rules, LS.lineup, LS.mode, LS.uid, LS.profile, LS.identity, LS.notices, LS.sims]) { try { localStorage.removeItem(k); } catch (e) {} }
+  Object.assign(state, { tasks: {}, notices: {}, sims: {}, refreshToken: "", idToken: "", tokenExpiry: 0, uid: "", mode: "", profile: null, online: false, identity: {} });
   state.rules = new Rules(null); state.lineup = parseLineup(null);
   showLogin(msg);
 }
@@ -2240,9 +2368,9 @@ async function explainDenied(e) {
   try {
     const acc = await fb("GET", "/access", ROOT_URL);
     if (acc && acc.legacy === false) {
-      for (const k of [LS.refresh, LS.tasks, LS.mode]) { try { localStorage.removeItem(k); } catch (err) {} }
+      for (const k of [LS.refresh, LS.tasks, LS.mode, LS.notices, LS.sims]) { try { localStorage.removeItem(k); } catch (err) {} }
       lsSet(LS.legacyClosed, true);
-      Object.assign(state, { tasks: {}, refreshToken: "", idToken: "", tokenExpiry: 0, online: false });
+      Object.assign(state, { tasks: {}, notices: {}, sims: {}, refreshToken: "", idToken: "", tokenExpiry: 0, online: false });
       showLogin("共用帳號已停用。請輸入你的手機號碼和管理者給你的啟用碼。");
       return true;
     }
@@ -2560,6 +2688,538 @@ async function onAdminClick(e) {
 }
 
 // ==========================================
+// 🚩 本月重點、📶 SIM 卡管理（資料放在 /notices、/sims，全隊共用）
+// ==========================================
+const md = s => { const d = parseYmd(s); return d ? `${d.getMonth() + 1}/${d.getDate()}` : ""; };
+const daysUntil = s => { const d = parseYmd(s); return d ? dayDiff(new Date(), d) : null; };
+const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const whoAmI = () => state.identity.name || "未具名";
+const myPhone = () => (state.mode === "device" && state.profile ? state.profile.phone : "");
+const isAdminMe = () => !!(state.mode === "device" && state.profile && state.profile.admin);
+const shortAt = s => { const m = /^\d{4}-(\d{2})-(\d{2}) (\d{2}:\d{2})/.exec(s || ""); return m ? `${+m[1]}/${+m[2]} ${m[3]}` : (s || ""); };
+const thisMonth = () => ymd(new Date()).slice(0, 7);
+const RULES_HINT = "資料庫規則還沒更新，暫時不能用。請管理者到「⚙ 設定 → 🛡 管理後台」按「再次產生規則」，貼到 Firebase 發布。";
+
+/** 讀本月重點、SIM 卡（規則還沒更新時不影響行事曆本身） */
+async function syncExtras(what) {
+  let changed = false;
+  for (const [key, path, okKey] of [["notices", "/notices", "noticesOk"], ["sims", "/sims", "simsOk"]]) {
+    if (what && what !== key) continue;
+    try {
+      const v = await fb("GET", path, ROOT_URL), data = v && typeof v === "object" ? v : {};
+      state[okKey] = true;
+      if (JSON.stringify(data) !== JSON.stringify(state[key])) { state[key] = data; lsSet(LS[key], data); changed = true; }
+    } catch (e) {
+      if (e instanceof AuthError) throw e;
+      if (e instanceof DbError) state[okKey] = false;
+    }
+  }
+  return changed;
+}
+/** 寫入後重新讀一次，畫面以雲端為準 */
+async function extraWrite(body, what, msg) {
+  if (!state.online) { toast("離線中，無法修改"); return false; }
+  try { await fb("PATCH", "/", ROOT_URL, body); }
+  catch (e) {
+    if (e instanceof AuthError) { authLost(e.message); return false; }
+    if (e instanceof DbError && (await explainDenied(e))) return false;
+    await alertBox("沒有存成功", e instanceof DbError ? "資料庫拒絕了這次修改。\n可能是規則還沒更新，或你沒有這一項的權限。" : e.message);
+    return false;
+  }
+  try { await syncExtras(what); } catch (e) {}
+  renderCalendar(); renderTools();
+  if (state.openSheet === "notice") renderNotices();
+  if (state.openSheet === "sim") renderSims();
+  if (state.openSheet === "day") renderDayFlags();
+  if (msg) toast(msg);
+  return true;
+}
+
+/** 有欄位的小對話框：按確定時呼叫 onOk(wrap)，回傳字串＝錯誤訊息（不關閉） */
+function formBox(title, html, okText, onOk, opts = {}) {
+  return new Promise(resolve => {
+    const wrap = document.createElement("div");
+    wrap.className = "modal-wrap";
+    wrap.innerHTML = `<div class="modal" role="dialog"><h3>${esc(title)}</h3>${opts.msg ? `<div class="msg">${esc(opts.msg)}</div>` : ""}` +
+      `<div class="fb-body">${html}</div><div class="fb-err"></div><div class="btns"></div></div>`;
+    const box = wrap.querySelector(".btns"), err = wrap.querySelector(".fb-err");
+    const close = v => { wrap.remove(); resolve(v); };
+    const add = (text, kind, fn) => { const b = document.createElement("button"); b.className = "btn" + (kind ? " " + kind : ""); b.textContent = text; b.onclick = fn; box.appendChild(b); return b; };
+    for (const [text, kind, fn] of opts.extra || []) add(text, kind, async () => { if ((await fn(wrap)) !== false) close(null); });
+    add("取消", "", () => close(null));
+    const okb = add(okText || "儲存", "primary", async () => {
+      okb.disabled = true; err.textContent = "";
+      let r;
+      try { r = await onOk(wrap); } catch (e) { r = e.message || String(e); }
+      okb.disabled = false;
+      if (typeof r === "string") { err.textContent = r; return; }
+      if (r === false) return;
+      close(r === undefined ? true : r);
+    });
+    wrap.addEventListener("click", e => {          // 表單裡的分段按鈕
+      const b = e.target.closest(".seg button");
+      if (!b || !wrap.contains(b)) return;
+      b.parentElement.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+      b.parentElement.dispatchEvent(new Event("change"));
+    });
+    document.body.appendChild(wrap);
+    if (opts.onOpen) opts.onOpen(wrap);
+    const f = wrap.querySelector("input:not([type=checkbox]),textarea");
+    if (f && !opts.noFocus) f.focus();
+  });
+}
+const segVal = (wrap, sel) => { const b = wrap.querySelector(`${sel} button.on`); return b ? b.dataset.v : ""; };
+const fval = (wrap, sel) => { const el = wrap.querySelector(sel); return el ? el.value.replace(/\s+/g, " ").trim() : ""; };
+
+// ---------- 🚩 本月重點 ----------
+const noticeMonthOf = n => (n.due ? n.due.slice(0, 7) : (n.month || ""));
+const noticeForMe = n => !n.team || !TEAMS.includes(normalizeTeam(state.identity.team)) || n.team === normalizeTeam(state.identity.team);
+function noticeList(ym) {
+  const cur = thisMonth(), out = [];
+  for (const [id, n] of Object.entries(state.notices || {})) {
+    if (!n || typeof n !== "object" || !n.text) continue;
+    const m = noticeMonthOf(n), carried = !n.done && !!m && m < ym && ym === cur;
+    if (m === ym || carried) out.push(Object.assign({}, n, { id, carried }));
+  }
+  return out.sort((a, b) => {
+    if (!!a.done !== !!b.done) return a.done ? 1 : -1;
+    if (a.done) return String(b.doneAt || "").localeCompare(String(a.doneAt || ""));
+    if (a.carried !== b.carried) return a.carried ? -1 : 1;
+    return String(a.due || "9999").localeCompare(String(b.due || "9999")) || String(a.at || "").localeCompare(String(b.at || ""));
+  });
+}
+const openNotices = () => noticeList(thisMonth()).filter(n => !n.done && noticeForMe(n));
+const noticesDue = d => Object.entries(state.notices || {}).filter(([, n]) => n && n.text && n.due === d)
+  .map(([id, n]) => Object.assign({}, n, { id })).sort((a, b) => (a.done ? 1 : 0) - (b.done ? 1 : 0));
+function canEditNotice(n) {
+  if (isAdminMe()) return true;
+  if (state.mode === "device") return !!n.byPhone && n.byPhone === myPhone();
+  return !!n.by && n.by === state.identity.name;
+}
+function dueInfo(n) {
+  if (n.done || !n.due) return null;
+  const k = daysUntil(n.due);
+  if (k == null) return null;
+  if (k < 0) return [`已過期 ${-k} 天`, "late"];
+  if (k === 0) return ["今天到期", "late"];
+  if (k <= 3) return [`剩 ${k} 天`, "soon"];
+  return null;
+}
+function noticeRowHtml(n) {
+  const di = dueInfo(n), tags = [];
+  if (n.carried) tags.push(`<span class="ntag late">上月未完成</span>`);
+  if (di) tags.push(`<span class="ntag ${di[1]}">${di[0]}</span>`);
+  if (n.team) tags.push(`<span class="ntag">${esc(n.team)}</span>`);
+  const meta = [n.due ? `期限 ${mdw(n.due)}` : "本月內", n.by ? `${esc(n.by)}新增` : ""].filter(Boolean).join("・");
+  const done = n.done ? `<div class="nw ok">✔ ${esc(n.doneBy || "")} ${esc(shortAt(n.doneAt))} 完成</div>` : "";
+  return `<div class="nrow${n.done ? " done" : ""}" data-nid="${esc(n.id)}">` +
+    `<button class="nchk" data-nact="tick" aria-label="${n.done ? "取消完成" : "標示完成"}"${state.online ? "" : " disabled"}>${n.done ? "✔" : ""}</button>` +
+    `<div class="nm" data-nact="edit"><div class="nt">${esc(n.text)} ${tags.join("")}</div><div class="nw">${meta}</div>${done}</div></div>`;
+}
+/** 不用手動新增的提醒：我這個月的值班、SIM 卡該還／到期 */
+function autoReminders() {
+  const out = [], me = state.identity.name, today = new Date();
+  if (me) {
+    const end = new Date(today.getFullYear(), today.getMonth() + 1, 0), LU = lineupMap(end), days = [];
+    for (let d = new Date(today.getFullYear(), today.getMonth(), today.getDate()); d <= end; d = addDays(d, 1)) {
+      const r = myRole(LU.get(ymd(d)), me);
+      if (r && ["值班", "大備", "二備"].includes(r.role)) days.push(`${d.getMonth() + 1}/${d.getDate()}${r.role}`);
+    }
+    if (days.length) out.push({ icon: "👮", text: `你這個月還有：${days.join("、")}` });
+  }
+  for (const s of simArr()) for (const [t, c] of simAlerts(s)) out.push({ icon: "📶", text: `SIM …${s.tail} ${t}`, cls: c });
+  return out;
+}
+const autoHtml = list => list.map(a => `<div class="nauto ${a.cls || ""}">${a.icon} ${esc(a.text)}</div>`).join("");
+const noticePref = () => lsGet(LS.noticePop, {}) || {};
+
+function openNoticesSheet() {
+  if (!state.noticeMonth) state.noticeMonth = thisMonth();
+  renderNotices();
+  openSheet("notice");
+}
+function renderNotices() {
+  const ym = state.noticeMonth || thisMonth(), [y, m] = ym.split("-").map(Number);
+  $("#n-month").textContent = `${y} 年 ${m} 月`;
+  $("#n-pop").checked = noticePref().on !== false;
+  $("#n-add").disabled = !state.online || state.noticesOk === false;
+  if (state.noticesOk === false) { $("#n-list").innerHTML = `<div class="card warnc">⚠ ${RULES_HINT}</div>`; $("#n-auto").innerHTML = ""; return; }
+  const list = noticeList(ym), open = list.filter(n => !n.done), done = list.filter(n => n.done);
+  const wasOpen = !!document.querySelector("#n-list details.ndone[open]");
+  let html = open.length ? open.map(noticeRowHtml).join("") : `<div class="empty">這個月沒有未完成的重點事項。</div>`;
+  if (done.length) html += `<details class="ndone"${wasOpen ? " open" : ""}><summary>已完成 ${done.length} 項</summary>${done.map(noticeRowHtml).join("")}</details>`;
+  $("#n-list").innerHTML = html;
+  const auto = ym === thisMonth() ? autoReminders() : [];
+  $("#n-auto").innerHTML = auto.length ? `<div class="sec">自動提醒（不用手動新增）</div>${autoHtml(auto)}` : "";
+}
+function renderDayFlags() {
+  const box = $("#d-flags");
+  if (!box) return;
+  const list = noticesDue(state.selected);
+  box.innerHTML = (list.length ? `<div class="sec ent-h" style="color:var(--off-fg)">🚩 重點事項</div><div class="nlist">${list.map(noticeRowHtml).join("")}</div>` : "") +
+    `<button class="lnk" id="d-flag-add"${state.online && state.noticesOk !== false ? "" : " disabled"}>🚩 新增這天到期的重點事項</button>`;
+}
+async function tickNotice(id) {
+  const n = state.notices[id];
+  if (!n) return;
+  const p = `notices/${id}/`;
+  const body = n.done ? { [p + "done"]: null, [p + "doneBy"]: null, [p + "doneAt"]: null }
+                      : { [p + "done"]: true, [p + "doneBy"]: whoAmI(), [p + "doneAt"]: nowStr() };
+  await extraWrite(body, "notices", n.done ? "已改回未完成" : "✔ 已完成");
+}
+function openNoticeForm(id, presetDue) {
+  const n = id ? state.notices[id] : null;
+  if (n && !canEditNotice(n)) {
+    alertBox("不能修改", `只有新增的人（${n.by || "未具名"}）或管理者可以修改、刪除這一項。\n做完了可以按左邊的方框打勾。`);
+    return;
+  }
+  const team = n ? n.team || "" : "";
+  const html = `<div class="grid2" style="margin-top:10px">
+    <span>事項</span><textarea id="nf-text" rows="2" maxlength="200" placeholder="例如：繳交績效報表">${esc(n ? n.text : "")}</textarea>
+    <span>期限</span><input type="date" id="nf-due" value="${esc(n ? n.due || "" : presetDue || "")}">
+    <span>對象</span><select id="nf-team"><option value="">全隊</option>${TEAMS.map(T => `<option value="${T}"${T === team ? " selected" : ""}>${T} 小隊</option>`).join("")}</select></div>
+    <div class="hint" style="margin-top:6px">期限可以不填（算整個月）。有期限的會標在行事曆那一天，3 天內到期會變色。</div>`;
+  const extra = n ? [["🗑 刪除", "danger", async () => {
+    if (!(await confirmBox("刪除重點事項", `要刪除「${n.text}」嗎？`, "刪除", true))) return false;
+    return extraWrite({ [`notices/${id}`]: null }, "notices", "已刪除");
+  }]] : [];
+  return formBox(n ? "✎ 修改重點事項" : "🚩 新增重點事項", html, n ? "儲存" : "新增", async w => {
+    const text = fval(w, "#nf-text"), due = w.querySelector("#nf-due").value, tm = w.querySelector("#nf-team").value;
+    if (!text) return "請輸入事項內容";
+    if (due && !parseYmd(due)) return "期限的日期格式不對";
+    const month = due ? due.slice(0, 7) : (n ? noticeMonthOf(n) || state.noticeMonth || thisMonth() : state.noticeMonth || thisMonth());
+    if (n) {
+      const p = `notices/${id}/`;
+      return extraWrite({ [p + "text"]: text, [p + "due"]: due || null, [p + "month"]: month, [p + "team"]: tm || null,
+                          [p + "editedBy"]: whoAmI(), [p + "editedAt"]: nowStr() }, "notices", "已儲存");
+    }
+    const rec = { text, month, by: whoAmI(), at: nowStr() };
+    if (due) rec.due = due;
+    if (tm) rec.team = tm;
+    if (myPhone()) rec.byPhone = myPhone();
+    return extraWrite({ [`notices/${newId("n")}`]: rec }, "notices", "已新增重點事項");
+  }, { extra });
+}
+function onNoticeClick(e) {
+  if (e.target.closest("#d-flag-add")) { openNoticeForm(null, state.selected); return; }
+  const el = e.target.closest("[data-nact]");
+  if (!el) return;
+  const row = el.closest(".nrow"), id = row && row.dataset.nid;
+  if (!id) return;
+  if (el.dataset.nact === "tick") tickNotice(id);
+  else openNoticeForm(id);
+}
+/** 每天第一次開啟時跳出本月重點 */
+async function maybeNoticePopup(force) {
+  const p = noticePref(), today = ymd(new Date());
+  if (!force && (p.on === false || p.shown === today)) return;
+  if (!force && (!state.identity.name || state.openSheet || document.querySelector(".modal-wrap"))) return;
+  const items = openNotices(), auto = autoReminders();
+  if (!items.length && !auto.length) { if (force) openNoticesSheet(); return; }
+  lsSet(LS.noticePop, Object.assign({}, p, { shown: today }));
+  const list = items.map(n => { const di = dueInfo(n);
+    return `<div class="npi"><b>${esc(n.text)}</b>${n.carried ? ' <span class="ntag late">上月未完成</span>' : ""}${di ? ` <span class="ntag ${di[1]}">${di[0]}</span>` : ""}` +
+      `<div class="nw">${n.due ? `期限 ${mdw(n.due)}` : "本月內"}${n.team ? `・${esc(n.team)}` : ""}</div></div>`; }).join("");
+  const html = `<div class="npop">${list || '<div class="hint">這個月沒有未完成的重點事項。</div>'}${auto.length ? `<div class="sec">自動提醒</div>${autoHtml(auto)}` : ""}</div>
+    <label class="chk" style="margin-top:12px"><input type="checkbox" id="np-on"${p.on === false ? "" : " checked"}> 每天第一次開啟時自動顯示</label>`;
+  const pr = ask(`🚩 ${new Date().getMonth() + 1} 月重點`, "", [["all", "查看全部", ""], ["ok", "知道了", "primary"]], html);
+  const wraps = document.querySelectorAll(".modal-wrap"), wrap = wraps[wraps.length - 1];
+  wrap.querySelector("#np-on").onchange = ev => { lsSet(LS.noticePop, Object.assign(noticePref(), { on: ev.target.checked })); toast(ev.target.checked ? "每天會自動顯示" : "不再自動顯示，可以點上方「🚩 重點」查看"); };
+  if ((await pr) === "all") openNoticesSheet();
+}
+
+// ---------- 📶 SIM 卡 ----------
+const SIM_STATUS = { stock: "在隊上", inuse: "使用中", lent: "借出", returned: "已還原單位", off: "停用" };
+const CARRIERS = ["中華", "遠傳", "台灣大", "其他"];
+const DEVICE_TYPES = ["監控攝影機", "GPS 定位器", "行動網路分享器"];
+const OFF_REASONS = ["遺失", "損壞", "門號已停用", "其他"];
+const SIM_FILTERS = [["active", "全部"], ["stock", "在隊上"], ["inuse", "使用中"], ["lent", "借出"], ["borrowed", "借入"], ["ended", "已結束"]];
+const devIcon = d => (!d ? "" : /攝影|監控|鏡頭|cam/i.test(d) ? "🎥" : /GPS|定位|追蹤/i.test(d) ? "📍" : /分享|路由|網卡|wi-?fi/i.test(d) ? "📡" : "📦");
+const simArr = () => Object.entries(state.sims || {}).filter(([, s]) => s && typeof s === "object" && s.tail).map(([id, s]) => Object.assign({}, s, { id }));
+const simActive = s => !s.removed && s.status !== "off" && s.status !== "returned";
+const simLabel = s => `…${s.tail}${s.carrier ? " " + s.carrier : ""}`;
+function simAlerts(s) {
+  const out = [];
+  if (!simActive(s)) return out;
+  const when = k => (k === 0 ? "今天" : `${k} 天後`);
+  if (s.source === "borrowed" && s.returnBy) {
+    const k = daysUntil(s.returnBy), u = s.fromUnit || "原單位";
+    if (k != null && k < 0) out.push([`借入逾期 ${-k} 天未還（應還 ${md(s.returnBy)}，${u}）`, "late"]);
+    else if (k != null && k <= 3) out.push([`${when(k)}要還給${u}（${md(s.returnBy)}）`, "soon"]);
+  }
+  if (s.status === "lent" && s.lentDue) {
+    const k = daysUntil(s.lentDue), u = s.lentUnit || "他隊";
+    if (k != null && k < 0) out.push([`借出逾期 ${-k} 天未收回（${u}，預計 ${md(s.lentDue)}）`, "late"]);
+    else if (k != null && k <= 3) out.push([`借給${u}，預計${when(k)}收回（${md(s.lentDue)}）`, "soon"]);
+  }
+  if (s.expiry) {
+    const k = daysUntil(s.expiry);
+    if (k != null && k < 0) out.push([`有效期限已過 ${-k} 天（${md(s.expiry)}）`, "late"]);
+    else if (k != null && k <= 7) out.push([`有效期限${k === 0 ? "今天到期" : `剩 ${k} 天`}（${md(s.expiry)}）`, "soon"]);
+  }
+  return out;
+}
+function simMatches(s, f, q) {
+  if (f === "ended") { if (simActive(s)) return false; }
+  else if (!simActive(s)) return false;
+  else if (f === "borrowed" && s.source !== "borrowed") return false;
+  else if (["stock", "inuse", "lent"].includes(f) && s.status !== f) return false;
+  if (!q) return true;
+  return [s.tail, s.holder, s.device, s.caseRef, s.fromUnit, s.lentUnit, s.lentContact, s.fromContact, s.note, s.carrier].some(v => v && String(v).toLowerCase().includes(q));
+}
+const STATUS_ORDER = { inuse: 0, stock: 1, lent: 2, returned: 3, off: 4 };
+function simSort(a, b) {
+  const la = simAlerts(a).some(x => x[1] === "late"), lb = simAlerts(b).some(x => x[1] === "late");
+  if (la !== lb) return la ? -1 : 1;
+  if (!!a.removed !== !!b.removed) return a.removed ? 1 : -1;
+  return (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9) || String(a.tail).localeCompare(String(b.tail));
+}
+function simLine(s) {
+  if (s.removed) return "已刪除";
+  if (s.status === "lent") return `↗ 借給 ${s.lentUnit || "他隊"}${s.lentContact ? " " + s.lentContact : ""}${s.lentDue ? `・預計 ${md(s.lentDue)} 還` : ""}`;
+  if (s.status === "inuse") return `${devIcon(s.device)} ${s.device || "使用中"}${s.caseRef ? `・${s.caseRef}` : ""}${s.holder ? `・保管：${s.holder}` : ""}`.trim();
+  if (s.status === "stock") return `隊上保管${s.holder ? `（${s.holder}）` : ""}`;
+  if (s.status === "returned") return `已還給 ${s.fromUnit || "原單位"}`;
+  if (s.status === "off") return `停用${s.offReason ? `：${s.offReason}` : ""}`;
+  return "";
+}
+function simRowHtml(s) {
+  const al = simAlerts(s), st = s.removed ? "已刪除" : SIM_STATUS[s.status] || "";
+  const src = s.source === "borrowed" ? `<div class="sx b">↙ 借自 ${esc(s.fromUnit || "他隊")}${s.returnBy && simActive(s) ? `・應還 ${esc(md(s.returnBy))}` : ""}</div>` : "";
+  return `<div class="srow${simActive(s) ? "" : " ended"}" data-sid="${esc(s.id)}">
+    <div class="st1"><span class="stail">…${esc(s.tail)}</span><span class="scar">${esc(s.carrier || "")}</span><span class="sbadge s-${s.removed ? "removed" : esc(s.status)}">${esc(st)}</span></div>
+    <div class="sx">${esc(simLine(s))}</div>${src}
+    ${al.map(([t, c]) => `<div class="sx ${c}">⚠ ${esc(t)}</div>`).join("")}
+    <div class="sx m">${s.since ? `${esc(md(s.since))} 起・` : ""}最後修改 ${esc(s.updatedBy || s.createdBy || "")} ${esc(shortAt(s.updatedAt || s.createdAt))}</div></div>`;
+}
+function simSummaryHtml(arr) {
+  const act = arr.filter(simActive), own = act.filter(s => s.source !== "borrowed"), bor = act.filter(s => s.source === "borrowed");
+  const n = st => own.filter(s => s.status === st).length, late = act.filter(s => simAlerts(s).some(x => x[1] === "late")).length;
+  return `<span>本隊 <b>${own.length}</b></span><span>在隊上 <b>${n("stock")}</b></span><span>使用中 <b>${n("inuse")}</b></span>` +
+    `<span>借出 <b>${n("lent")}</b></span><span>借入 <b>${bor.length}</b></span>${late ? `<span class="late">逾期／過期 <b>${late}</b></span>` : ""}`;
+}
+function openSimSheet() {
+  state.simView = null;
+  renderSims();
+  openSheet("sim");
+  syncExtras("sims").then(ch => { if (ch && state.openSheet === "sim") renderSims(); }).catch(() => {});
+}
+function renderSims() {
+  const body = $("#sim-body");
+  if (state.simsOk === false) { body.innerHTML = `<div class="card warnc">⚠ ${RULES_HINT}</div>`; return; }
+  const arr = simArr();
+  if (state.simView && state.sims[state.simView]) { body.innerHTML = simDetailHtml(Object.assign({}, state.sims[state.simView], { id: state.simView })); return; }
+  state.simView = null;
+  const f = state.simFilter || "active";
+  const ro = state.online ? "" : " disabled";
+  body.innerHTML = `<div class="ssum">${simSummaryHtml(arr)}</div>
+    <div class="row" style="margin-top:10px"><input type="search" class="grow" id="sim-q" placeholder="🔍 搜尋末碼、保管人、用途、單位" value="${esc(state.simQuery || "")}" autocomplete="off">
+      <button class="btn primary" data-sact="add"${ro}>＋ 新增</button></div>
+    <div class="sfil">${SIM_FILTERS.map(([k, t]) => `<button class="${k === f ? "on" : ""}" data-sfil="${k}">${t}</button>`).join("")}</div>
+    <div class="slist">${simListHtml(arr)}</div>
+    <div class="row" style="margin-top:12px"><button class="btn ghost" data-sact="csv"${arr.length ? "" : " disabled"}>⬇ 匯出清單（Excel 可開）</button></div>
+    <div class="hint" style="margin-top:6px">全隊都能修改，每次修改都會記下是誰、什麼時候。建議只記卡號末碼和案件代號，不要記架設地點的地址。</div>`;
+}
+function simListHtml(arr) {
+  const f = state.simFilter || "active", q = (state.simQuery || "").trim().toLowerCase();
+  const list = arr.filter(s => simMatches(s, f, q)).sort(simSort);
+  return list.length ? list.map(simRowHtml).join("") : `<div class="empty">${arr.length ? "沒有符合的卡片。" : "還沒有 SIM 卡資料，按「＋ 新增」開始建立。"}</div>`;
+}
+function simDetailHtml(s) {
+  const ro = state.online ? "" : " disabled", act = simActive(s), own = s.source !== "borrowed";
+  const rows = [];
+  const R = (k, v) => { if (v) rows.push(`<span>${k}</span><div>${v}</div>`); };
+  R("來源", own ? "本隊的卡" : `向 <b>${esc(s.fromUnit || "他隊")}</b> 借${s.fromContact ? `（承辦 ${esc(s.fromContact)}）` : ""}${s.borrowedAt ? `，${esc(md(s.borrowedAt))} 借入` : ""}${s.returnBy ? `，應還 ${esc(mdw(s.returnBy))}` : ""}`);
+  R("狀態", `<b>${esc(s.removed ? "已刪除" : SIM_STATUS[s.status] || "")}</b>${s.since ? `（${esc(md(s.since))} 起）` : ""}${s.status === "off" && s.offReason ? `：${esc(s.offReason)}` : ""}`);
+  if (s.status === "lent") R("借出", `給 <b>${esc(s.lentUnit || "")}</b>${s.lentContact ? `（承辦 ${esc(s.lentContact)}）` : ""}${s.lentAt ? `，${esc(md(s.lentAt))} 借出` : ""}${s.lentDue ? `，預計 ${esc(mdw(s.lentDue))} 還` : ""}`);
+  R("保管人", esc(s.holder || ""));
+  R("用途", s.device ? `${devIcon(s.device)} ${esc(s.device)}` : "");
+  R("案件代號", esc(s.caseRef || ""));
+  if (s.expiry) { const k = daysUntil(s.expiry); R("有效期限", `${esc(s.expiry)}${k != null ? (k < 0 ? `（已過 ${-k} 天）` : `（剩 ${k} 天）`) : ""}`); }
+  R("備註", esc(s.note || ""));
+  const B = (a, t, kind = "") => `<button class="btn ${kind}" data-sact="${a}"${ro}>${t}</button>`;
+  const btns = [];
+  if (!s.removed) {
+    if (act && s.status !== "lent") btns.push(B("move", "🔁 交接／改用途", "primary"));
+    if (act && own && s.status !== "lent") btns.push(B("lend", "↗ 借出"));
+    if (s.status === "lent") btns.push(B("back", "↩ 收回", "primary"));
+    if (act && !own) btns.push(B("giveback", "↩ 還給原單位"));
+    if (act) btns.push(B("off", "⛔ 停用"));
+    if (!act) btns.push(B("revive", "♻ 恢復使用"));
+    btns.push(B("edit", "✎ 修改資料"), B("del", "🗑 刪除", "danger"));
+  } else {
+    btns.push(B("undel", "♻ 復原", "primary"));
+    if (isAdminMe()) btns.push(B("purge", "永久刪除", "danger"));
+  }
+  const log = Object.entries(s.log || {}).map(([, l]) => l).filter(l => l && typeof l === "object")
+    .sort((a, b) => String(b.at || "").localeCompare(String(a.at || "")));
+  return `<button class="lnk" data-sact="list">← 回到清單</button>
+    <div class="sdh"><span class="stail big">…${esc(s.tail)}</span><span class="scar">${esc(s.carrier || "")}</span>
+      <span class="sbadge s-${s.removed ? "removed" : esc(s.status)}">${esc(s.removed ? "已刪除" : SIM_STATUS[s.status] || "")}</span></div>
+    ${simAlerts(s).map(([t, c]) => `<div class="sx ${c}" style="margin-top:4px">⚠ ${esc(t)}</div>`).join("")}
+    <div class="grid2 sgrid">${rows.join("")}</div>
+    <div class="sbtns">${btns.join("")}</div>
+    <div class="sec">歷程（${log.length} 筆）</div>
+    <div class="slog">${log.map(l => `<div class="sl"><span class="t">${esc(shortAt(l.at))}</span><b>${esc(l.by || "")}</b> ${esc(l.act || "")}${l.text ? `：${esc(l.text)}` : ""}</div>`).join("") || '<div class="empty">沒有紀錄</div>'}</div>`;
+}
+/** 寫入一張卡：欄位＋一筆歷程（誰、什麼時候、做了什麼） */
+function simWrite(id, fields, act, text, msg) {
+  const at = nowStr(), by = whoAmI(), p = `sims/${id}/`, body = {};
+  for (const [k, v] of Object.entries(fields)) body[p + k] = v === "" || v == null ? null : v;
+  body[p + "updatedBy"] = by; body[p + "updatedAt"] = at;
+  body[p + "log/" + newId("l")] = { at, by, act, text: text || "" };
+  return extraWrite(body, "sims", msg);
+}
+const datalists = () => {
+  const units = new Set(), devs = new Set(DEVICE_TYPES);
+  for (const s of simArr()) { if (s.fromUnit) units.add(s.fromUnit); if (s.lentUnit) units.add(s.lentUnit); if (s.device) devs.add(s.device); }
+  const opt = a => [...a].map(v => `<option value="${esc(v)}"></option>`).join("");
+  return `<datalist id="sim-people">${opt(leaveNames())}</datalist><datalist id="sim-units">${opt(units)}</datalist><datalist id="sim-devs">${opt(devs)}</datalist>`;
+};
+const segH = (id, opts, cur) => `<div class="seg" id="${id}">${opts.map(([v, t]) => `<button type="button" data-v="${v}" class="${v === cur ? "on" : ""}">${t}</button>`).join("")}</div>`;
+const inpH = (id, v, extra = "") => `<input type="text" id="${id}" value="${esc(v || "")}" ${extra}>`;
+const dateH = (id, v) => `<input type="date" id="${id}" value="${esc(v || "")}">`;
+function dupWarn(tail, carrier, exceptId) {
+  return simArr().find(s => s.id !== exceptId && !s.removed && simActive(s) && s.tail === tail && (!carrier || !s.carrier || s.carrier === carrier));
+}
+function simForm(id) {
+  const s = id ? state.sims[id] : null, today = ymd(new Date());
+  const src = s ? (s.source === "borrowed" ? "borrowed" : "own") : "own";
+  const html = `${datalists()}<div class="grid2 sgrid">
+    <span>卡號末碼</span>${inpH("sf-tail", s && s.tail, 'inputmode="numeric" maxlength="5" placeholder="4 或 5 碼"')}
+    <span>電信</span><select id="sf-car"><option value="">（不填）</option>${CARRIERS.map(c => `<option${s && s.carrier === c ? " selected" : ""}>${c}</option>`).join("")}</select>
+    <span>來源</span>${segH("sf-src", [["own", "本隊的卡"], ["borrowed", "向他隊借"]], src)}</div>
+    <div class="grid2 sgrid${src === "borrowed" ? "" : " hidden"}" id="sf-bor">
+    <span>借自單位</span>${inpH("sf-from", s && s.fromUnit, 'list="sim-units" placeholder="例如 偵三隊"')}
+    <span>對方承辦</span>${inpH("sf-fromc", s && s.fromContact, 'placeholder="可不填"')}
+    <span>借入日</span>${dateH("sf-bat", s ? s.borrowedAt : today)}
+    <span>應還日期</span>${dateH("sf-ret", s && s.returnBy)}</div>
+    <div class="grid2 sgrid">
+    ${s ? "" : `<span>狀態</span>${segH("sf-st", [["stock", "在隊上保管"], ["inuse", "使用中"]], "stock")}`}
+    <span>保管人</span>${inpH("sf-holder", s && s.holder, 'list="sim-people" placeholder="現在在誰手上"')}
+    <span>用途</span>${inpH("sf-dev", s && s.device, 'list="sim-devs" placeholder="監控攝影機、GPS…"')}
+    <span>案件代號</span>${inpH("sf-case", s && s.caseRef, 'placeholder="可不填"')}
+    <span>有效期限</span>${dateH("sf-exp", s && s.expiry)}
+    <span>備註</span>${inpH("sf-note", s && s.note)}</div>
+    <div class="hint" style="margin-top:6px">有效期限可以不填（預付卡要儲值的才需要）。</div>`;
+  const LBL = { tail: "末碼", carrier: "電信", source: "來源", fromUnit: "借自單位", fromContact: "對方承辦", borrowedAt: "借入日", returnBy: "應還日期",
+                holder: "保管人", device: "用途", caseRef: "案件代號", expiry: "有效期限", note: "備註" };
+  return formBox(s ? `✎ 修改 ${simLabel(s)}` : "📶 新增 SIM 卡", html, s ? "儲存" : "新增", async w => {
+    const f = { tail: fval(w, "#sf-tail").replace(/\D/g, ""), carrier: w.querySelector("#sf-car").value, source: segVal(w, "#sf-src") || "own",
+                holder: fval(w, "#sf-holder"), device: fval(w, "#sf-dev"), caseRef: fval(w, "#sf-case"), expiry: w.querySelector("#sf-exp").value, note: fval(w, "#sf-note") };
+    if (!/^\d{4,5}$/.test(f.tail)) return "卡號末碼請輸入 4 或 5 個數字";
+    if (f.source === "borrowed") {
+      Object.assign(f, { fromUnit: fval(w, "#sf-from"), fromContact: fval(w, "#sf-fromc"), borrowedAt: w.querySelector("#sf-bat").value, returnBy: w.querySelector("#sf-ret").value });
+      if (!f.fromUnit) return "請填借自哪個單位";
+    } else Object.assign(f, { fromUnit: "", fromContact: "", borrowedAt: "", returnBy: "" });
+    const dup = (!s || s.tail !== f.tail || (s.carrier || "") !== f.carrier) && dupWarn(f.tail, f.carrier, id);
+    if (dup && !(await confirmBox("末碼重複", `已經有一張 ${simLabel(dup)}（${SIM_STATUS[dup.status] || ""}）。\n確定是不同張卡嗎？`, "是不同張，繼續"))) return false;
+    if (!s) {
+      const st = segVal(w, "#sf-st") || "stock", nid = newId("s");
+      Object.assign(f, { status: st, since: f.source === "borrowed" && f.borrowedAt ? f.borrowedAt : today, createdBy: whoAmI(), createdAt: nowStr() });
+      const desc = [f.source === "borrowed" ? `向${f.fromUnit}借入` : "本隊", SIM_STATUS[st], f.holder && `保管：${f.holder}`, f.device].filter(Boolean).join("・");
+      return simWrite(nid, f, "新增", desc, `已新增 …${f.tail}`);
+    }
+    const diff = Object.keys(LBL).filter(k => (s[k] || "") !== (f[k] || "")).map(k => `${LBL[k]} ${s[k] || "（空）"}→${f[k] || "（空）"}`);
+    if (!diff.length) return "沒有變更";
+    return simWrite(id, f, "修改資料", diff.join("、"), "已儲存");
+  }, { onOpen: w => w.querySelector("#sf-src").addEventListener("change", () => w.querySelector("#sf-bor").classList.toggle("hidden", segVal(w, "#sf-src") !== "borrowed")) });
+}
+async function simAction(act, id) {
+  const s = id ? state.sims[id] : null, today = ymd(new Date()), me = whoAmI();
+  if (act === "add") return simForm(null);
+  if (act === "csv") return exportSims();
+  if (act === "list") { state.simView = null; renderSims(); return; }
+  if (!s) return;
+  const L = simLabel(s);
+  if (act === "edit") return simForm(id);
+  if (act === "move") {
+    const html = `${datalists()}<div class="grid2 sgrid"><span>狀態</span>${segH("mv-st", [["stock", "在隊上保管"], ["inuse", "使用中"]], s.status === "inuse" ? "inuse" : "stock")}
+      <span>交給誰</span>${inpH("mv-holder", s.holder, 'list="sim-people" placeholder="保管人"')}
+      <span>用途</span>${inpH("mv-dev", s.device, 'list="sim-devs" placeholder="監控攝影機、GPS…"')}
+      <span>案件代號</span>${inpH("mv-case", s.caseRef, 'placeholder="可不填"')}</div>`;
+    return formBox(`🔁 交接／改用途 ${L}`, html, "儲存", async w => {
+      const f = { status: segVal(w, "#mv-st"), holder: fval(w, "#mv-holder"), device: fval(w, "#mv-dev"), caseRef: fval(w, "#mv-case") };
+      const parts = [];
+      if ((s.holder || "") !== f.holder) parts.push(`${s.holder || "（無）"} → ${f.holder || "（無）"}`);
+      if ((s.device || "") !== f.device) parts.push(`用途 ${s.device || "（無）"} → ${f.device || "（無）"}`);
+      if ((s.caseRef || "") !== f.caseRef) parts.push(`案件 ${s.caseRef || "（無）"} → ${f.caseRef || "（無）"}`);
+      if (s.status !== f.status) parts.push(`${SIM_STATUS[s.status] || ""} → ${SIM_STATUS[f.status]}`);
+      if (!parts.length) return "沒有變更";
+      if (s.status !== f.status || (s.holder || "") !== f.holder) f.since = today;
+      return simWrite(id, f, (s.holder || "") !== f.holder ? "交接" : "改用途", parts.join("、"), "已更新");
+    });
+  }
+  if (act === "lend") {
+    const html = `${datalists()}<div class="grid2 sgrid"><span>借給單位</span>${inpH("ln-unit", "", 'list="sim-units" placeholder="例如 偵三隊"')}
+      <span>對方承辦</span>${inpH("ln-who", "", 'placeholder="姓名"')}<span>借出日</span>${dateH("ln-at", today)}<span>預計歸還</span>${dateH("ln-due", "")}</div>`;
+    return formBox(`↗ 借出 ${L}`, html, "借出", async w => {
+      const f = { lentUnit: fval(w, "#ln-unit"), lentContact: fval(w, "#ln-who"), lentAt: w.querySelector("#ln-at").value || today, lentDue: w.querySelector("#ln-due").value };
+      if (!f.lentUnit) return "請填借給哪個單位";
+      Object.assign(f, { status: "lent", since: f.lentAt, holder: "", device: "", caseRef: "" });
+      return simWrite(id, f, "借出", `借給 ${f.lentUnit}${f.lentContact ? `（承辦 ${f.lentContact}）` : ""}${f.lentDue ? `，預計 ${md(f.lentDue)} 還` : ""}`, "已登記借出");
+    });
+  }
+  if (act === "back") {
+    const html = `${datalists()}<div class="grid2 sgrid"><span>收回後</span>${segH("bk-st", [["stock", "在隊上保管"], ["inuse", "使用中"]], "stock")}
+      <span>交給誰</span>${inpH("bk-holder", me, 'list="sim-people"')}</div>`;
+    return formBox(`↩ 收回 ${L}`, html, "收回", async w => {
+      const f = { status: segVal(w, "#bk-st"), holder: fval(w, "#bk-holder"), since: today, lentUnit: "", lentContact: "", lentAt: "", lentDue: "" };
+      return simWrite(id, f, "收回", `自 ${s.lentUnit || "他隊"} 收回${f.holder ? `，交給 ${f.holder}` : ""}`, "已收回");
+    }, { msg: `${s.lentUnit || "他隊"}還回來了？` });
+  }
+  if (act === "giveback") {
+    if (!(await confirmBox("還給原單位", `${L} 要還給 ${s.fromUnit || "原單位"} 了嗎？\n還了之後會移到「已結束」，紀錄會保留。`, "已歸還"))) return;
+    return simWrite(id, { status: "returned", since: today, holder: "", device: "", caseRef: "" }, "歸還", `還給 ${s.fromUnit || "原單位"}`, "已登記歸還");
+  }
+  if (act === "off") {
+    const html = `<div class="grid2 sgrid"><span>原因</span><select id="of-r">${OFF_REASONS.map(r => `<option>${r}</option>`).join("")}</select>
+      <span>說明</span>${inpH("of-t", "", 'placeholder="可不填"')}</div>`;
+    return formBox(`⛔ 停用 ${L}`, html, "停用", async w => {
+      const r = w.querySelector("#of-r").value, t = fval(w, "#of-t"), reason = t ? `${r}（${t}）` : r;
+      return simWrite(id, { status: "off", offReason: reason, since: today, holder: "", device: "", caseRef: "" }, "停用", reason, "已停用");
+    });
+  }
+  if (act === "revive") {
+    if (!(await confirmBox("恢復使用", `${L} 要恢復成「在隊上保管」嗎？`, "恢復"))) return;
+    return simWrite(id, { status: "stock", offReason: "", since: today }, "恢復使用", "", "已恢復");
+  }
+  if (act === "del") {
+    if (!(await confirmBox("刪除", `要刪除 ${L} 嗎？\n輸入錯誤才用刪除；卡片不用了請用「停用」。\n刪除後會放在「已結束」裡，可以復原。`, "刪除", true))) return;
+    return simWrite(id, { removed: true }, "刪除", "", "已刪除");
+  }
+  if (act === "undel") return simWrite(id, { removed: null }, "復原", "", "已復原");
+  if (act === "purge") {
+    if (!(await confirmBox("永久刪除", `${L} 和它的所有歷程都會消失，無法復原。確定嗎？`, "永久刪除", true))) return;
+    state.simView = null;
+    return extraWrite({ [`sims/${id}`]: null }, "sims", "已永久刪除");
+  }
+}
+function onSimClick(e) {
+  const fil = e.target.closest("[data-sfil]");
+  if (fil) { state.simFilter = fil.dataset.sfil; renderSims(); return; }
+  const a = e.target.closest("[data-sact]");
+  if (a) { if (!a.disabled) simAction(a.dataset.sact, state.simView); return; }
+  const row = e.target.closest(".srow");
+  if (row) { state.simView = row.dataset.sid; renderSims(); $("#sim-sheet .body").scrollTop = 0; }
+}
+function exportSims() {
+  const head = ["卡號末碼", "電信", "來源", "借自單位", "對方承辦", "借入日", "應還日期", "狀態", "起始日", "保管人", "用途", "案件代號",
+                "借出單位", "借出承辦", "借出日", "預計歸還", "有效期限", "備註", "最後修改人", "最後修改時間"];
+  const rows = simArr().filter(s => !s.removed).sort(simSort).map(s => [s.tail, s.carrier, s.source === "borrowed" ? "借入" : "本隊", s.fromUnit, s.fromContact, s.borrowedAt, s.returnBy,
+    SIM_STATUS[s.status] || s.status, s.since, s.holder, s.device, s.caseRef, s.lentUnit, s.lentContact, s.lentAt, s.lentDue, s.expiry, s.note,
+    s.updatedBy || s.createdBy, s.updatedAt || s.createdAt]);
+  const cell = v => { v = v == null ? "" : String(v); if (/^\d+$/.test(v) && v.length >= 4 && v.length <= 5) v = `="${v}"`; return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; };
+  const csv = "﻿" + [head].concat(rows).map(r => r.map(cell).join(",")).join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  a.download = `SIM_list_${ymd(new Date()).replace(/-/g, "")}.csv`;   // 中文檔名在部分瀏覽器會變成沒有副檔名的 download
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  toast("已匯出");
+}
+
+// ==========================================
 // 🚪 登入、啟動
 // ==========================================
 function showLogin(msg) {
@@ -2587,6 +3247,7 @@ function afterMainReady() {
   if (!state.identity.name) setTimeout(() => openIdentity(true), 200);
   else if (state.mode === "device") setStatus($("#status").textContent + `　👤 ${displayName()}（${teamLabel(state.identity.team)}）`);
   else setStatus($("#status").textContent + `　👤 已自動辨識：${state.identity.name}（${teamLabel(state.identity.team)}）`);
+  setTimeout(() => maybeNoticePopup(false), 900);
   setTimeout(maybeRemind, 1500);
   setInterval(maybeRemind, REMIND_CHECK_MS);
   setInterval(() => { if (!document.hidden) refreshFromCloud(); }, POLL_MS);
@@ -2665,6 +3326,22 @@ function setupEvents() {
   };
   $("#backdrop").onclick = () => closeSheet();
   setupLineupEvents();
+  $("#flag-btn").onclick = () => openNoticesSheet();
+  $("#sim-btn").onclick = () => openSimSheet();
+  $("#n-add").onclick = () => openNoticeForm(null, "");
+  $("#n-list").addEventListener("click", onNoticeClick);
+  $("#d-flags").addEventListener("click", onNoticeClick);
+  const shiftNoticeMonth = k => { const [y, m] = (state.noticeMonth || thisMonth()).split("-").map(Number), d = new Date(y, m - 1 + k, 1);
+    state.noticeMonth = ymd(d).slice(0, 7); renderNotices(); };
+  $("#n-prev").onclick = () => shiftNoticeMonth(-1);
+  $("#n-next").onclick = () => shiftNoticeMonth(1);
+  $("#n-pop").onchange = e => { lsSet(LS.noticePop, Object.assign(noticePref(), { on: e.target.checked })); toast(e.target.checked ? "每天第一次開啟時會自動跳出" : "不再自動跳出，點上方「🚩 重點」查看"); };
+  $("#sim-body").addEventListener("click", onSimClick);
+  $("#sim-body").addEventListener("input", e => {
+    if (e.target.id !== "sim-q") return;
+    state.simQuery = e.target.value;
+    const L = $("#sim-body .slist"); if (L) L.innerHTML = simListHtml(simArr());
+  });
   $("#theme-sel").onchange = e => { document.documentElement.setAttribute("data-theme", e.target.value); try { localStorage.setItem(LS.theme, e.target.value); } catch (err) {} };
   document.querySelectorAll(".sheet").forEach(enableSwipeClose);
   document.querySelectorAll("[data-close]").forEach(b => b.onclick = () => closeSheet());
@@ -2675,8 +3352,8 @@ function setupEvents() {
     const msg = state.mode === "device" ? "要登出這支手機，並清除手機上的快取資料嗎？\n登出後要重新輸入啟用碼（啟用碼過期的話要向管理者再要一組）。"
                                         : "要登出這支手機，並清除手機上的快取資料嗎？（不影響其他同事）";
     if (!(await confirmBox("登出", msg, "登出", true))) return;
-    for (const k of [LS.refresh, LS.tasks]) { try { localStorage.removeItem(k); } catch (e) {} }
-    state.tasks = {}; authLost("已登出");
+    for (const k of [LS.refresh, LS.tasks, LS.notices, LS.sims]) { try { localStorage.removeItem(k); } catch (e) {} }
+    state.tasks = {}; state.notices = {}; state.sims = {}; authLost("已登出");
   };
   $("#s-activate").onclick = () => { closeSheet(); openActivate(); };
   $("#s-admin").onclick = () => openAdmin();
@@ -2756,3 +3433,4 @@ startup();
 </script>
 </body>
 </html>
+
